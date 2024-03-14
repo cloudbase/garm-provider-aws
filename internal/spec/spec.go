@@ -24,10 +24,45 @@ import (
 	"github.com/cloudbase/garm-provider-common/cloudconfig"
 	"github.com/cloudbase/garm-provider-common/params"
 	"github.com/cloudbase/garm-provider-common/util"
+	"github.com/xeipuuv/gojsonschema"
 )
+
+const (
+	jsonSchema string = `
+		{
+			"$schema": "http://cloudbase.it/garm-provider-aws/schemas/extra_specs#",
+			"type": "object",
+			"description": "Schema defining supported extra specs for the Garm AWS Provider",
+			"properties": {
+				"subnet_id": {
+					"type": "string",
+					"pattern": "^subnet-[0-9a-fA-F]{17}$"
+				}
+			},
+			"additionalProperties": false
+		}
+	`
+)
+
+func jsonSchemaValidation(schema json.RawMessage) error {
+	schemaLoader := gojsonschema.NewStringLoader(jsonSchema)
+	extraSpecsLoader := gojsonschema.NewBytesLoader(schema)
+	result, err := gojsonschema.Validate(schemaLoader, extraSpecsLoader)
+	if err != nil {
+		return fmt.Errorf("failed to validate schema: %w", err)
+	}
+	if !result.Valid() {
+		return fmt.Errorf("schema validation failed: %s", result.Errors())
+	}
+	return nil
+}
 
 func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs, error) {
 	spec := &extraSpecs{}
+
+	if err := jsonSchemaValidation(data.ExtraSpecs); err != nil {
+		return nil, fmt.Errorf("failed to validate extra specs: %w", err)
+	}
 
 	if len(data.ExtraSpecs) > 0 {
 		if err := json.Unmarshal(data.ExtraSpecs, spec); err != nil {
