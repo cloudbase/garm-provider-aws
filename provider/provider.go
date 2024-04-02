@@ -44,20 +44,18 @@ func NewAwsProvider(ctx context.Context, configPath, controllerID string) (execu
 	}
 
 	return &AwsProvider{
-		cfg:          conf,
 		controllerID: controllerID,
 		awsCli:       awsCli,
 	}, nil
 }
 
 type AwsProvider struct {
-	cfg          *config.Config
 	controllerID string
 	awsCli       *client.AwsCli
 }
 
 func (a *AwsProvider) CreateInstance(ctx context.Context, bootstrapParams params.BootstrapInstance) (params.ProviderInstance, error) {
-	spec, err := spec.GetRunnerSpecFromBootstrapParams(a.cfg, bootstrapParams, a.controllerID)
+	spec, err := spec.GetRunnerSpecFromBootstrapParams(a.awsCli.Config(), bootstrapParams, a.controllerID)
 	if err != nil {
 		return params.ProviderInstance{}, fmt.Errorf("failed to get runner spec: %w", err)
 	}
