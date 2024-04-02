@@ -44,6 +44,10 @@ const (
 	`
 )
 
+type ToolFetchFunc func(osType params.OSType, osArch params.OSArch, tools []params.RunnerApplicationDownload) (params.RunnerApplicationDownload, error)
+
+var DefaultToolFetch ToolFetchFunc = util.GetTools
+
 func jsonSchemaValidation(schema json.RawMessage) error {
 	schemaLoader := gojsonschema.NewStringLoader(jsonSchema)
 	extraSpecsLoader := gojsonschema.NewBytesLoader(schema)
@@ -78,7 +82,7 @@ type extraSpecs struct {
 }
 
 func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapInstance, controllerID string) (*RunnerSpec, error) {
-	tools, err := util.GetTools(data.OSType, data.OSArch, data.Tools)
+	tools, err := DefaultToolFetch(data.OSType, data.OSArch, data.Tools)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get tools: %s", err)
 	}

@@ -39,18 +39,40 @@ func NewAwsCli(ctx context.Context, cfg *config.Config) (*AwsCli, error) {
 	client := ec2.NewFromConfig(cliCfg)
 	awsCli := &AwsCli{
 		cfg:    cfg,
-		client: *client,
-		region: cfg.Region,
+		client: client,
 	}
 
 	return awsCli, nil
 }
 
+type ClientInterface interface {
+	StartInstances(ctx context.Context, params *ec2.StartInstancesInput, optFns ...func(*ec2.Options)) (*ec2.StartInstancesOutput, error)
+	StopInstances(ctx context.Context, params *ec2.StopInstancesInput, optFns ...func(*ec2.Options)) (*ec2.StopInstancesOutput, error)
+	DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error)
+	TerminateInstances(ctx context.Context, params *ec2.TerminateInstancesInput, optFns ...func(*ec2.Options)) (*ec2.TerminateInstancesOutput, error)
+	RunInstances(ctx context.Context, params *ec2.RunInstancesInput, optFns ...func(*ec2.Options)) (*ec2.RunInstancesOutput, error)
+}
+
 type AwsCli struct {
 	cfg *config.Config
 
-	client ec2.Client
-	region string
+	client ClientInterface
+}
+
+func (a *AwsCli) Config() *config.Config {
+	return a.cfg
+}
+
+func (a *AwsCli) Client() ClientInterface {
+	return a.client
+}
+
+func (a *AwsCli) SetConfig(cfg *config.Config) {
+	a.cfg = cfg
+}
+
+func (a *AwsCli) SetClient(client ClientInterface) {
+	a.client = client
 }
 
 func (a *AwsCli) StartInstance(ctx context.Context, vmName string) error {
