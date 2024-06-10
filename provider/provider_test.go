@@ -75,8 +75,8 @@ func TestCreateInstance(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -168,8 +168,8 @@ func TestDeleteInstanceWithID(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -199,8 +199,8 @@ func TestDeleteInstanceWithName(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -263,8 +263,8 @@ func TestGetInstanceWithID(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -335,8 +335,8 @@ func TestGetInstanceWithName(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -422,8 +422,8 @@ func TestListInstances(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -511,8 +511,8 @@ func TestStop(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -541,8 +541,8 @@ func TestStartStoppedInstance(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",
@@ -593,8 +593,8 @@ func TestStartStoppingInstance(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			CredentialType: config.AWSCredentialTypeAccessKey,
-			AccessKey: config.AccessKeyCredentials{
+			CredentialType: config.AWSCredentialTypeStaticCredentials,
+			StaticCredentials: config.StaticCredentials{
 				AccessKeyID:     "AccessKeyID",
 				SecretAccessKey: "SecretAccessKey",
 				SessionToken:    "SessionToken",

@@ -28,8 +28,8 @@ import (
 type AWSCredentialType string
 
 const (
-	AWSCredentialTypeAccessKey AWSCredentialType = "access_key"
-	AWSCredentialTypeRole      AWSCredentialType = "role"
+	AWSCredentialTypeStaticCredentials AWSCredentialType = "static"
+	AWSCredentialTypeRole              AWSCredentialType = "role"
 )
 
 // NewConfig returns a new Config
@@ -66,7 +66,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-type AccessKeyCredentials struct {
+type StaticCredentials struct {
 	// AWS Access key ID
 	AccessKeyID string `toml:"access_key_id"`
 
@@ -77,7 +77,7 @@ type AccessKeyCredentials struct {
 	SessionToken string `toml:"session_token"`
 }
 
-func (c AccessKeyCredentials) Validate() error {
+func (c StaticCredentials) Validate() error {
 	if c.AccessKeyID == "" {
 		return fmt.Errorf("missing access_key_id")
 	}
@@ -93,15 +93,19 @@ func (c AccessKeyCredentials) Validate() error {
 }
 
 type Credentials struct {
-	CredentialType AWSCredentialType    `toml:"credential_type"`
-	AccessKey      AccessKeyCredentials `toml:"access_key"`
+	CredentialType    AWSCredentialType `toml:"credential_type"`
+	StaticCredentials StaticCredentials `toml:"static"`
 }
 
 func (c Credentials) Validate() error {
 	switch c.CredentialType {
-	case AWSCredentialTypeAccessKey:
-		return c.AccessKey.Validate()
+	case AWSCredentialTypeStaticCredentials:
+		return c.StaticCredentials.Validate()
 	case AWSCredentialTypeRole:
+	case "":
+		return fmt.Errorf("missing credential_type")
+	default:
+		return fmt.Errorf("unknown credential type: %s", c.CredentialType)
 	}
 	return nil
 }
@@ -114,13 +118,13 @@ func (c Config) GetAWSConfig(ctx context.Context) (aws.Config, error) {
 	var cfg aws.Config
 	var err error
 	switch c.Credentials.CredentialType {
-	case AWSCredentialTypeAccessKey:
+	case AWSCredentialTypeStaticCredentials:
 		cfg, err = config.LoadDefaultConfig(ctx,
 			config.WithCredentialsProvider(
 				credentials.NewStaticCredentialsProvider(
-					c.Credentials.AccessKey.AccessKeyID,
-					c.Credentials.AccessKey.SecretAccessKey,
-					c.Credentials.AccessKey.SessionToken)),
+					c.Credentials.StaticCredentials.AccessKeyID,
+					c.Credentials.StaticCredentials.SecretAccessKey,
+					c.Credentials.StaticCredentials.SessionToken)),
 			config.WithRegion(c.Region),
 		)
 	case AWSCredentialTypeRole:
