@@ -37,6 +37,36 @@ const (
 				"subnet_id": {
 					"type": "string",
 					"pattern": "^subnet-[0-9a-fA-F]{17}$"
+				},
+				"disable_updates": {
+					"type": "boolean",
+					"description": "Disable automatic updates on the VM."
+				},
+				"enable_boot_debug": {
+					"type": "boolean",
+					"description": "Enable boot debug on the VM."
+				},
+				"extra_packages": {
+					"type": "array",
+					"description": "Extra packages to install on the VM.",
+					"items": {
+						"type": "string"
+					}
+				},
+				"runner_install_template": {
+					"type": "string",
+					"description": "This option can be used to override the default runner install template. If used, the caller is responsible for the correctness of the template as well as the suitability of the template for the target OS. Use the extra_context extra spec if your template has variables in it that need to be expanded."
+				},
+				"extra_context": {
+					"type": "object",
+					"description": "Extra context that will be passed to the runner_install_template.",
+					"additionalProperties": {
+						"type": "string"
+					}
+				},
+				"pre_install_scripts": {
+					"type": "object",
+					"description": "A map of pre-install scripts that will be run before the runner install script. These will run as root and can be used to prep a generic image before we attempt to install the runner. The key of the map is the name of the script as it will be written to disk. The value is a byte array with the contents of the script."
 				}
 			},
 			"additionalProperties": false
@@ -78,7 +108,10 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 }
 
 type extraSpecs struct {
-	SubnetID *string `json:"subnet_id,omitempty"`
+	SubnetID        *string  `json:"subnet_id,omitempty"`
+	DisableUpdates  *bool    `json:"disable_updates"`
+	EnableBootDebug *bool    `json:"enable_boot_debug"`
+	ExtraPackages   []string `json:"extra_packages"`
 }
 
 func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapInstance, controllerID string) (*RunnerSpec, error) {
@@ -94,6 +127,7 @@ func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapI
 
 	spec := &RunnerSpec{
 		Region:          cfg.Region,
+		ExtraPackages:   extraSpecs.ExtraPackages,
 		Tools:           tools,
 		BootstrapParams: data,
 		SubnetID:        cfg.SubnetID,
@@ -107,6 +141,9 @@ func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapI
 
 type RunnerSpec struct {
 	Region          string
+	DisableUpdates  bool
+	ExtraPackages   []string
+	EnableBootDebug bool
 	Tools           params.RunnerApplicationDownload
 	BootstrapParams params.BootstrapInstance
 	SubnetID        string
@@ -127,19 +164,30 @@ func (r *RunnerSpec) MergeExtraSpecs(extraSpecs *extraSpecs) {
 	if extraSpecs.SubnetID != nil && *extraSpecs.SubnetID != "" {
 		r.SubnetID = *extraSpecs.SubnetID
 	}
+	if extraSpecs.DisableUpdates != nil {
+		r.DisableUpdates = *extraSpecs.DisableUpdates
+	}
+
+	if extraSpecs.EnableBootDebug != nil {
+		r.EnableBootDebug = *extraSpecs.EnableBootDebug
+	}
 }
 
 func (r *RunnerSpec) ComposeUserData() (string, error) {
-	switch r.BootstrapParams.OSType {
+	bootstrapParams := r.BootstrapParams
+	bootstrapParams.UserDataOptions.DisableUpdatesOnBoot = r.DisableUpdates
+	bootstrapParams.UserDataOptions.ExtraPackages = r.ExtraPackages
+	bootstrapParams.UserDataOptions.EnableBootDebug = r.EnableBootDebug
+	switch bootstrapParams.OSType {
 	case params.Linux:
-		udata, err := cloudconfig.GetCloudConfig(r.BootstrapParams, r.Tools, r.BootstrapParams.Name)
+		udata, err := cloudconfig.GetCloudConfig(bootstrapParams, r.Tools, bootstrapParams.Name)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate userdata: %w", err)
 		}
 		asBase64 := base64.StdEncoding.EncodeToString([]byte(udata))
 		return asBase64, nil
 	case params.Windows:
-		udata, err := cloudconfig.GetCloudConfig(r.BootstrapParams, r.Tools, r.BootstrapParams.Name)
+		udata, err := cloudconfig.GetCloudConfig(bootstrapParams, r.Tools, bootstrapParams.Name)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate userdata: %w", err)
 		}
@@ -147,5 +195,5 @@ func (r *RunnerSpec) ComposeUserData() (string, error) {
 		asBase64 := base64.StdEncoding.EncodeToString([]byte(wrapped))
 		return asBase64, nil
 	}
-	return "", fmt.Errorf("unsupported OS type for cloud config: %s", r.BootstrapParams.OSType)
+	return "", fmt.Errorf("unsupported OS type for cloud config: %s", bootstrapParams.OSType)
 }
