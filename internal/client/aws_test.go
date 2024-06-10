@@ -35,9 +35,12 @@ func TestStartInstance(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
@@ -62,9 +65,12 @@ func TestStopInstance(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
@@ -89,9 +95,12 @@ func TestFindInstances(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
@@ -145,9 +154,12 @@ func TestFindOneInstanceWithName(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
@@ -195,9 +207,12 @@ func TestFindOneInstanceWithID(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
@@ -234,9 +249,12 @@ func TestGetInstance(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
@@ -270,9 +288,12 @@ func TestTerminateInstance(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
@@ -315,9 +336,12 @@ func TestCreateRunningInstance(t *testing.T) {
 		Region:   "us-west-2",
 		SubnetID: "subnet-1234567890abcdef0",
 		Credentials: config.Credentials{
-			AccessKeyID:     "AccessKeyID",
-			SecretAccessKey: "SecretAccessKey",
-			SessionToken:    "SessionToken",
+			CredentialType: config.AWSCredentialTypeAccessKey,
+			AccessKey: config.AccessKeyCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockClient := new(MockComputeClient)
