@@ -32,7 +32,7 @@ func TestConfigValidate(t *testing.T) {
 			name: "valid config",
 			c: &Config{
 				Credentials: Credentials{
-					CredentialType: AWSCredentialTypeStaticCredentials,
+					CredentialType: AWSCredentialTypeStatic,
 					StaticCredentials: StaticCredentials{
 						AccessKeyID:     "access_key_id",
 						SecretAccessKey: "secret_access_key",
@@ -48,7 +48,7 @@ func TestConfigValidate(t *testing.T) {
 			name: "missing subnet_id",
 			c: &Config{
 				Credentials: Credentials{
-					CredentialType: AWSCredentialTypeStaticCredentials,
+					CredentialType: AWSCredentialTypeStatic,
 					StaticCredentials: StaticCredentials{
 						AccessKeyID:     "access_key_id",
 						SecretAccessKey: "secret_access_key",
@@ -63,7 +63,7 @@ func TestConfigValidate(t *testing.T) {
 			name: "missing region",
 			c: &Config{
 				Credentials: Credentials{
-					CredentialType: AWSCredentialTypeStaticCredentials,
+					CredentialType: AWSCredentialTypeStatic,
 					StaticCredentials: StaticCredentials{
 						AccessKeyID:     "access_key_id",
 						SecretAccessKey: "secret_access_key",
@@ -116,7 +116,7 @@ func TestCredentialsValidate(t *testing.T) {
 		{
 			name: "valid credentials",
 			c: Credentials{
-				CredentialType: AWSCredentialTypeStaticCredentials,
+				CredentialType: AWSCredentialTypeStatic,
 				StaticCredentials: StaticCredentials{
 					AccessKeyID:     "access_key_id",
 					SecretAccessKey: "secret_access_key",
@@ -128,7 +128,7 @@ func TestCredentialsValidate(t *testing.T) {
 		{
 			name: "missing access_key_id",
 			c: Credentials{
-				CredentialType: AWSCredentialTypeStaticCredentials,
+				CredentialType: AWSCredentialTypeStatic,
 				StaticCredentials: StaticCredentials{
 					AccessKeyID:     "",
 					SecretAccessKey: "secret_access_key",
@@ -140,7 +140,7 @@ func TestCredentialsValidate(t *testing.T) {
 		{
 			name: "missing secret_access_key",
 			c: Credentials{
-				CredentialType: AWSCredentialTypeStaticCredentials,
+				CredentialType: AWSCredentialTypeStatic,
 				StaticCredentials: StaticCredentials{
 					AccessKeyID:     "access_key_id",
 					SecretAccessKey: "",
@@ -152,7 +152,7 @@ func TestCredentialsValidate(t *testing.T) {
 		{
 			name: "missing session_token",
 			c: Credentials{
-				CredentialType: AWSCredentialTypeStaticCredentials,
+				CredentialType: AWSCredentialTypeStatic,
 				StaticCredentials: StaticCredentials{
 					AccessKeyID:     "access_key_id",
 					SecretAccessKey: "secret_access_key",
@@ -205,7 +205,7 @@ func TestNewConfig(t *testing.T) {
 		require.NoError(t, err, "NewConfig() should not have returned an error")
 		require.Equal(t, &Config{
 			Credentials: Credentials{
-				CredentialType: AWSCredentialTypeStaticCredentials,
+				CredentialType: AWSCredentialTypeStatic,
 				StaticCredentials: StaticCredentials{
 					AccessKeyID:     "access_key_id",
 					SecretAccessKey: "secret",

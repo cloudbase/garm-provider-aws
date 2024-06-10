@@ -28,8 +28,8 @@ import (
 type AWSCredentialType string
 
 const (
-	AWSCredentialTypeStaticCredentials AWSCredentialType = "static"
-	AWSCredentialTypeRole              AWSCredentialType = "role"
+	AWSCredentialTypeStatic AWSCredentialType = "static"
+	AWSCredentialTypeRole   AWSCredentialType = "role"
 )
 
 // NewConfig returns a new Config
@@ -99,7 +99,7 @@ type Credentials struct {
 
 func (c Credentials) Validate() error {
 	switch c.CredentialType {
-	case AWSCredentialTypeStaticCredentials:
+	case AWSCredentialTypeStatic:
 		return c.StaticCredentials.Validate()
 	case AWSCredentialTypeRole:
 	case "":
@@ -118,7 +118,7 @@ func (c Config) GetAWSConfig(ctx context.Context) (aws.Config, error) {
 	var cfg aws.Config
 	var err error
 	switch c.Credentials.CredentialType {
-	case AWSCredentialTypeStaticCredentials:
+	case AWSCredentialTypeStatic:
 		cfg, err = config.LoadDefaultConfig(ctx,
 			config.WithCredentialsProvider(
 				credentials.NewStaticCredentialsProvider(

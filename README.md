@@ -28,7 +28,10 @@ region = "eu-central-1"
 subnet_id = "sample_subnet_id"
 
 [credentials]
-    credential_type = "access_key"
+    # Allowed values are: static, role
+    # When using IAM roles, you can omit the [credentials.static] section
+    credential_type = "static"
+    [credentials.static]
     access_key_id = "sample_access_key_id"
     secret_access_key = "sample_secret_access_key"
     session_token = "sample_session_token"
