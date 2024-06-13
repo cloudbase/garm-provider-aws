@@ -250,6 +250,7 @@ func (a *AwsCli) CreateRunningInstance(ctx context.Context, spec *spec.RunnerSpe
 		MinCount:     aws.Int32(1),
 		SubnetId:     aws.String(spec.SubnetID),
 		UserData:     aws.String(udata),
+		KeyName:      spec.SSHKeyName,
 		TagSpecifications: []types.TagSpecification{
 			{
 				ResourceType: types.ResourceTypeInstance,

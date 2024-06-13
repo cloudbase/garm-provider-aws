@@ -38,6 +38,10 @@ const (
 					"type": "string",
 					"pattern": "^subnet-[0-9a-fA-F]{17}$"
 				},
+				"ssh_key_name": {
+					"type": "string",
+					"description": "The name of the Key Pair to use for the instance."
+				},
 				"disable_updates": {
 					"type": "boolean",
 					"description": "Disable automatic updates on the VM."
@@ -109,6 +113,7 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 
 type extraSpecs struct {
 	SubnetID        *string  `json:"subnet_id,omitempty"`
+	SSHKeyName      *string  `json:"ssh_key_name,omitempty"`
 	DisableUpdates  *bool    `json:"disable_updates"`
 	EnableBootDebug *bool    `json:"enable_boot_debug"`
 	ExtraPackages   []string `json:"extra_packages"`
@@ -147,6 +152,7 @@ type RunnerSpec struct {
 	Tools           params.RunnerApplicationDownload
 	BootstrapParams params.BootstrapInstance
 	SubnetID        string
+	SSHKeyName      *string
 	ControllerID    string
 }
 
@@ -164,6 +170,11 @@ func (r *RunnerSpec) MergeExtraSpecs(extraSpecs *extraSpecs) {
 	if extraSpecs.SubnetID != nil && *extraSpecs.SubnetID != "" {
 		r.SubnetID = *extraSpecs.SubnetID
 	}
+
+	if extraSpecs.SSHKeyName != nil {
+		r.SSHKeyName = extraSpecs.SSHKeyName
+	}
+
 	if extraSpecs.DisableUpdates != nil {
 		r.DisableUpdates = *extraSpecs.DisableUpdates
 	}

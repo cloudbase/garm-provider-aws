@@ -350,12 +350,14 @@ func TestCreateRunningInstance(t *testing.T) {
 			PoolID: "poolID",
 		},
 		SubnetID:     "subnet-1234567890abcdef0",
+		SSHKeyName:   aws.String("SSHKeyName"),
 		ControllerID: "controllerID",
 	}
 	mockClient.On("RunInstances", ctx, mock.Anything, mock.Anything).Return(&ec2.RunInstancesOutput{
 		Instances: []types.Instance{
 			{
 				InstanceId: aws.String(instanceID),
+				KeyName:    aws.String("SSHKeyName"),
 			},
 		},
 	}, nil)

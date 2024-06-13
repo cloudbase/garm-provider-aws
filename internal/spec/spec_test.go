@@ -33,7 +33,7 @@ func TestJsonSchemaValidation(t *testing.T) {
 	}{
 		{
 			name:      "valid schema",
-			schema:    json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0"}`),
+			schema:    json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name"}`),
 			errString: "",
 		},
 		{
@@ -207,9 +207,13 @@ func TestMergeExtraSpecs(t *testing.T) {
 				SubnetID: "subnet_id",
 			},
 			extra: &extraSpecs{
-				SubnetID: aws.String("subnet-0a0a0a0a0a0a0a0a0"),
+				SubnetID:   aws.String("subnet-0a0a0a0a0a0a0a0a0"),
+				SSHKeyName: aws.String("ssh_key_name"),
 			},
-			expected: &RunnerSpec{SubnetID: "subnet-0a0a0a0a0a0a0a0a0"},
+			expected: &RunnerSpec{
+				SubnetID:   "subnet-0a0a0a0a0a0a0a0a0",
+				SSHKeyName: aws.String("ssh_key_name"),
+			},
 		},
 	}
 
