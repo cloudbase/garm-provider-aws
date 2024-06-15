@@ -62,7 +62,7 @@ func (a *AwsProvider) CreateInstance(ctx context.Context, bootstrapParams params
 
 	instanceID, err := a.awsCli.CreateRunningInstance(ctx, spec)
 	if err != nil {
-		return a.GetInstance(ctx, instanceID)
+		return params.ProviderInstance{}, fmt.Errorf("failed to create instance: %w", err)
 	}
 
 	instance := params.ProviderInstance{
