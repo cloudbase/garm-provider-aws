@@ -33,7 +33,7 @@ func TestJsonSchemaValidation(t *testing.T) {
 	}{
 		{
 			name:      "valid schema",
-			schema:    json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name"}`),
+			schema:    json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "runner_install_template", "extra_context": {"key": "value"}, "pre_install_scripts":{"script1": "script1", "script2": "script2"}}`),
 			errString: "",
 		},
 		{
@@ -70,7 +70,7 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 		{
 			name: "valid bootstrap data",
 			bootstrap: params.BootstrapInstance{
-				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0"}`),
+				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "runner_install_template", "extra_context": {"key": "value"}, "pre_install_scripts":{"script1": "script1", "script2": "script2"}}`),
 			},
 			errString: "",
 		},
@@ -115,7 +115,7 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 	}
 
 	data := params.BootstrapInstance{
-		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0"}`),
+		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "runner_install_template", "extra_context": {"key": "value"}, "pre_install_scripts":{"script1": "script1", "script2": "script2"}}`),
 	}
 
 	config := &config.Config{
@@ -129,10 +129,14 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 	}
 	expectedRunnerSpec := &RunnerSpec{
 		Region:          "region",
+		DisableUpdates:  true,
+		ExtraPackages:   []string{"package1", "package2"},
+		EnableBootDebug: true,
 		SubnetID:        "subnet-0a0a0a0a0a0a0a0a0",
 		Tools:           Mocktools,
 		ControllerID:    "controller_id",
 		BootstrapParams: data,
+		SSHKeyName:      aws.String("ssh_key_name"),
 	}
 
 	runnerSpec, err := GetRunnerSpecFromBootstrapParams(config, data, "controller_id")
@@ -163,7 +167,16 @@ func TestRunnerSpecValidate(t *testing.T) {
 		{
 			name: "valid runner spec",
 			spec: &RunnerSpec{
-				Region:       "region",
+				Region:          "region",
+				DisableUpdates:  true,
+				ExtraPackages:   []string{"package1", "package2"},
+				EnableBootDebug: true,
+				Tools: params.RunnerApplicationDownload{
+					OS:           aws.String("linux"),
+					Architecture: aws.String("amd64"),
+					DownloadURL:  aws.String("MockURL"),
+					Filename:     aws.String("garm-runner"),
+				},
 				SubnetID:     "subnet_id",
 				ControllerID: "controller_id",
 				BootstrapParams: params.BootstrapInstance{
@@ -207,12 +220,17 @@ func TestMergeExtraSpecs(t *testing.T) {
 				SubnetID: "subnet_id",
 			},
 			extra: &extraSpecs{
-				SubnetID:   aws.String("subnet-0a0a0a0a0a0a0a0a0"),
-				SSHKeyName: aws.String("ssh_key_name"),
+				SubnetID:        aws.String("subnet-0a0a0a0a0a0a0a0a0"),
+				SSHKeyName:      aws.String("ssh_key_name"),
+				DisableUpdates:  aws.Bool(true),
+				EnableBootDebug: aws.Bool(true),
+				ExtraPackages:   []string{"package1", "package2"},
 			},
 			expected: &RunnerSpec{
-				SubnetID:   "subnet-0a0a0a0a0a0a0a0a0",
-				SSHKeyName: aws.String("ssh_key_name"),
+				SubnetID:        "subnet-0a0a0a0a0a0a0a0a0",
+				SSHKeyName:      aws.String("ssh_key_name"),
+				DisableUpdates:  true,
+				EnableBootDebug: true,
 			},
 		},
 	}
