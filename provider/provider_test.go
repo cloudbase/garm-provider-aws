@@ -18,6 +18,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -92,6 +93,64 @@ func TestCreateInstance(t *testing.T) {
 	}, nil)
 	result, err := provider.CreateInstance(ctx, bootstrapParams)
 	assert.NoError(t, err)
+	assert.Equal(t, expectedInstance, result)
+}
+
+func TestCreateInstanceError(t *testing.T) {
+	ctx := context.Background()
+	instanceID := "i-1234567890abcdef0"
+	spec.DefaultToolFetch = func(osType params.OSType, osArch params.OSArch, tools []params.RunnerApplicationDownload) (params.RunnerApplicationDownload, error) {
+		return params.RunnerApplicationDownload{
+			OS:           aws.String("linux"),
+			Architecture: aws.String("amd64"),
+			DownloadURL:  aws.String("MockURL"),
+			Filename:     aws.String("garm-runner"),
+		}, nil
+	}
+	bootstrapParams := params.BootstrapInstance{
+		Name:   "garm-instance",
+		Flavor: "t2.micro",
+		Image:  "ami-12345678",
+		Tools: []params.RunnerApplicationDownload{
+			{
+				OS:           aws.String("linux"),
+				Architecture: aws.String("amd64"),
+				DownloadURL:  aws.String("MockURL"),
+				Filename:     aws.String("garm-runner"),
+			},
+		},
+		OSType:     params.Linux,
+		OSArch:     params.Amd64,
+		PoolID:     "my-pool",
+		ExtraSpecs: json.RawMessage(`{}`),
+	}
+	expectedInstance := params.ProviderInstance{}
+	provider := &AwsProvider{
+		controllerID: "controllerID",
+		awsCli:       &client.AwsCli{},
+	}
+	config := &config.Config{
+		Region:   "us-east-1",
+		SubnetID: "subnet-123456",
+		Credentials: config.Credentials{
+			AccessKeyID:     "accessKey",
+			SecretAccessKey: "secretKey",
+			SessionToken:    "token",
+		},
+	}
+	mockComputeClient := new(client.MockComputeClient)
+	provider.awsCli.SetConfig(config)
+	provider.awsCli.SetClient(mockComputeClient)
+
+	mockComputeClient.On("RunInstances", ctx, mock.Anything, mock.Anything).Return(&ec2.RunInstancesOutput{
+		Instances: []types.Instance{
+			{
+				InstanceId: aws.String(instanceID),
+			},
+		},
+	}, fmt.Errorf("error creating instance"))
+	result, err := provider.CreateInstance(ctx, bootstrapParams)
+	assert.ErrorContains(t, err, "failed to create instance")
 	assert.Equal(t, expectedInstance, result)
 }
 
