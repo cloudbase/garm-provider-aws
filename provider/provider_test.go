@@ -136,9 +136,12 @@ func TestCreateInstanceError(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "accessKey",
+				SecretAccessKey: "secretKey",
+				SessionToken:    "token",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
