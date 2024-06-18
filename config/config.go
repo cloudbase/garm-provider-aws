@@ -128,7 +128,7 @@ func (c Config) GetAWSConfig(ctx context.Context) (aws.Config, error) {
 			config.WithRegion(c.Region),
 		)
 	case AWSCredentialTypeRole:
-		cfg, err = config.LoadDefaultConfig(ctx)
+		cfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(c.Region))
 	default:
 		return aws.Config{}, fmt.Errorf("unknown credential type: %s", c.Credentials.CredentialType)
 	}
