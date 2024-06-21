@@ -37,6 +37,22 @@ subnet_id = "sample_subnet_id"
     session_token = "sample_session_token"
 ```
 
+If you're running GARM on eks, you can use the IAM role assigned to the eks nodes by setting `credential_type` to `role`. In order for this to work, the environment variables prefixed with `AWS_` need to be visible by the provider. By default, GARM does not pass through any environment variables to the external providers. It only sets the needed variables that controls the operations of the provider itself. To pass through variables, you will need to set the `environment_variables` option in the provider configuration. For example:
+
+```toml
+[[provider]]
+name = "ec2_external"
+description = "external provider for AWS"
+provider_type = "external"
+disable_jit_config = false
+  [provider.external]
+  config_file = "/etc/garm/garm-provider-aws.toml"
+  provider_executable = "/opt/garm/providers/garm-provider-aws"
+  # This option will pass all environment variables that start with AWS_ to the provider.
+  # To pass in individual variables, you can add the entire name to the list.
+  environment_variables = ["AWS_"]
+```
+
 ## Creating a pool
 
 After you [add it to garm as an external provider](https://github.com/cloudbase/garm/blob/main/doc/providers.md#the-external-provider), you need to create a pool that uses it. Assuming you named your external provider as ```aws``` in the garm config, the following command should create a new pool:
