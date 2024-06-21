@@ -75,9 +75,12 @@ func TestCreateInstance(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -133,9 +136,12 @@ func TestCreateInstanceError(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "accessKey",
+				SecretAccessKey: "secretKey",
+				SessionToken:    "token",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -165,9 +171,12 @@ func TestDeleteInstanceWithID(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -193,9 +202,12 @@ func TestDeleteInstanceWithName(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -254,9 +266,12 @@ func TestGetInstanceWithID(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -323,9 +338,12 @@ func TestGetInstanceWithName(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -407,9 +425,12 @@ func TestListInstances(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -493,9 +514,12 @@ func TestStop(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -520,9 +544,12 @@ func TestStartStoppedInstance(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)
@@ -569,9 +596,12 @@ func TestStartStoppingInstance(t *testing.T) {
 		Region:   "us-east-1",
 		SubnetID: "subnet-123456",
 		Credentials: config.Credentials{
-			AccessKeyID:     "accessKey",
-			SecretAccessKey: "secretKey",
-			SessionToken:    "token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 	}
 	mockComputeClient := new(client.MockComputeClient)

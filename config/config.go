@@ -25,6 +25,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/credentials"
 )
 
+type AWSCredentialType string
+
+const (
+	AWSCredentialTypeStatic AWSCredentialType = "static"
+	AWSCredentialTypeRole   AWSCredentialType = "role"
+)
+
 // NewConfig returns a new Config
 func NewConfig(cfgFile string) (*Config, error) {
 	var config Config
@@ -59,7 +66,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-type Credentials struct {
+type StaticCredentials struct {
 	// AWS Access key ID
 	AccessKeyID string `toml:"access_key_id"`
 
@@ -70,7 +77,7 @@ type Credentials struct {
 	SessionToken string `toml:"session_token"`
 }
 
-func (c Credentials) Validate() error {
+func (c StaticCredentials) Validate() error {
 	if c.AccessKeyID == "" {
 		return fmt.Errorf("missing access_key_id")
 	}
@@ -85,19 +92,46 @@ func (c Credentials) Validate() error {
 	return nil
 }
 
+type Credentials struct {
+	CredentialType    AWSCredentialType `toml:"credential_type"`
+	StaticCredentials StaticCredentials `toml:"static"`
+}
+
+func (c Credentials) Validate() error {
+	switch c.CredentialType {
+	case AWSCredentialTypeStatic:
+		return c.StaticCredentials.Validate()
+	case AWSCredentialTypeRole:
+	case "":
+		return fmt.Errorf("missing credential_type")
+	default:
+		return fmt.Errorf("unknown credential type: %s", c.CredentialType)
+	}
+	return nil
+}
+
 func (c Config) GetAWSConfig(ctx context.Context) (aws.Config, error) {
 	if err := c.Credentials.Validate(); err != nil {
 		return aws.Config{}, fmt.Errorf("failed to validate credentials: %w", err)
 	}
 
-	cfg, err := config.LoadDefaultConfig(ctx,
-		config.WithCredentialsProvider(
-			credentials.NewStaticCredentialsProvider(
-				c.Credentials.AccessKeyID,
-				c.Credentials.SecretAccessKey,
-				c.Credentials.SessionToken)),
-		config.WithRegion(c.Region),
-	)
+	var cfg aws.Config
+	var err error
+	switch c.Credentials.CredentialType {
+	case AWSCredentialTypeStatic:
+		cfg, err = config.LoadDefaultConfig(ctx,
+			config.WithCredentialsProvider(
+				credentials.NewStaticCredentialsProvider(
+					c.Credentials.StaticCredentials.AccessKeyID,
+					c.Credentials.StaticCredentials.SecretAccessKey,
+					c.Credentials.StaticCredentials.SessionToken)),
+			config.WithRegion(c.Region),
+		)
+	case AWSCredentialTypeRole:
+		cfg, err = config.LoadDefaultConfig(ctx, config.WithRegion(c.Region))
+	default:
+		return aws.Config{}, fmt.Errorf("unknown credential type: %s", c.Credentials.CredentialType)
+	}
 	if err != nil {
 		return aws.Config{}, fmt.Errorf("failed to get aws config: %w", err)
 	}

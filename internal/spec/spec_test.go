@@ -120,9 +120,12 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 
 	config := &config.Config{
 		Credentials: config.Credentials{
-			AccessKeyID:     "access_key_id",
-			SecretAccessKey: "secret_access_key",
-			SessionToken:    "session_token",
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
 		},
 		SubnetID: "subnet_id",
 		Region:   "region",

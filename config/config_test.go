@@ -32,9 +32,12 @@ func TestConfigValidate(t *testing.T) {
 			name: "valid config",
 			c: &Config{
 				Credentials: Credentials{
-					AccessKeyID:     "access_key_id",
-					SecretAccessKey: "secret_access_key",
-					SessionToken:    "session_token",
+					CredentialType: AWSCredentialTypeStatic,
+					StaticCredentials: StaticCredentials{
+						AccessKeyID:     "access_key_id",
+						SecretAccessKey: "secret_access_key",
+						SessionToken:    "session_token",
+					},
 				},
 				SubnetID: "subnet_id",
 				Region:   "region",
@@ -45,9 +48,12 @@ func TestConfigValidate(t *testing.T) {
 			name: "missing subnet_id",
 			c: &Config{
 				Credentials: Credentials{
-					AccessKeyID:     "access_key_id",
-					SecretAccessKey: "secret_access_key",
-					SessionToken:    "session_token",
+					CredentialType: AWSCredentialTypeStatic,
+					StaticCredentials: StaticCredentials{
+						AccessKeyID:     "access_key_id",
+						SecretAccessKey: "secret_access_key",
+						SessionToken:    "session_token",
+					},
 				},
 				Region: "region",
 			},
@@ -57,21 +63,35 @@ func TestConfigValidate(t *testing.T) {
 			name: "missing region",
 			c: &Config{
 				Credentials: Credentials{
-					AccessKeyID:     "access_key_id",
-					SecretAccessKey: "secret_access_key",
-					SessionToken:    "session_token",
+					CredentialType: AWSCredentialTypeStatic,
+					StaticCredentials: StaticCredentials{
+						AccessKeyID:     "access_key_id",
+						SecretAccessKey: "secret_access_key",
+						SessionToken:    "session_token",
+					},
 				},
 				SubnetID: "subnet_id",
 			},
 			errString: "missing region",
 		},
 		{
-			name: "missing credentials",
+			name: "missing credential type",
 			c: &Config{
 				SubnetID: "subnet_id",
 				Region:   "region",
 			},
-			errString: "failed to validate credentials: missing access_key_id",
+			errString: "failed to validate credentials: missing credential_type",
+		},
+		{
+			name: "invalid credential type",
+			c: &Config{
+				SubnetID: "subnet_id",
+				Region:   "region",
+				Credentials: Credentials{
+					CredentialType: AWSCredentialType("bogus"),
+				},
+			},
+			errString: "failed to validate credentials: unknown credential type: bogus",
 		},
 	}
 
@@ -96,36 +116,48 @@ func TestCredentialsValidate(t *testing.T) {
 		{
 			name: "valid credentials",
 			c: Credentials{
-				AccessKeyID:     "access_key_id",
-				SecretAccessKey: "secret_access_key",
-				SessionToken:    "session_token",
+				CredentialType: AWSCredentialTypeStatic,
+				StaticCredentials: StaticCredentials{
+					AccessKeyID:     "access_key_id",
+					SecretAccessKey: "secret_access_key",
+					SessionToken:    "session_token",
+				},
 			},
 			errString: "",
 		},
 		{
 			name: "missing access_key_id",
 			c: Credentials{
-				AccessKeyID:     "",
-				SecretAccessKey: "secret_access_key",
-				SessionToken:    "session_token",
+				CredentialType: AWSCredentialTypeStatic,
+				StaticCredentials: StaticCredentials{
+					AccessKeyID:     "",
+					SecretAccessKey: "secret_access_key",
+					SessionToken:    "session_token",
+				},
 			},
 			errString: "missing access_key_id",
 		},
 		{
 			name: "missing secret_access_key",
 			c: Credentials{
-				AccessKeyID:     "access_key_id",
-				SecretAccessKey: "",
-				SessionToken:    "session_token",
+				CredentialType: AWSCredentialTypeStatic,
+				StaticCredentials: StaticCredentials{
+					AccessKeyID:     "access_key_id",
+					SecretAccessKey: "",
+					SessionToken:    "session_token",
+				},
 			},
 			errString: "missing secret_access_key",
 		},
 		{
 			name: "missing session_token",
 			c: Credentials{
-				AccessKeyID:     "access_key_id",
-				SecretAccessKey: "secret_access_key",
-				SessionToken:    "",
+				CredentialType: AWSCredentialTypeStatic,
+				StaticCredentials: StaticCredentials{
+					AccessKeyID:     "access_key_id",
+					SecretAccessKey: "secret_access_key",
+					SessionToken:    "",
+				},
 			},
 			errString: "missing session_token",
 		},
@@ -154,6 +186,8 @@ func TestNewConfig(t *testing.T) {
 		region = "region"
 		subnet_id = "subnet_id"
 		[credentials]
+			credential_type = "static"
+			[credentials.static]
 			access_key_id = "access_key_id"
 			secret_access_key = "secret"
 			session_token = "token"
@@ -171,9 +205,12 @@ func TestNewConfig(t *testing.T) {
 		require.NoError(t, err, "NewConfig() should not have returned an error")
 		require.Equal(t, &Config{
 			Credentials: Credentials{
-				AccessKeyID:     "access_key_id",
-				SecretAccessKey: "secret",
-				SessionToken:    "token",
+				CredentialType: AWSCredentialTypeStatic,
+				StaticCredentials: StaticCredentials{
+					AccessKeyID:     "access_key_id",
+					SecretAccessKey: "secret",
+					SessionToken:    "token",
+				},
 			},
 			SubnetID: "subnet_id",
 			Region:   "region",
