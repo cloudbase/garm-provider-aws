@@ -24,4 +24,4 @@ jobs:
       - run: go version
 
       - name: Run GARM Go Tests
-        run: make go-test
+        run: make test
