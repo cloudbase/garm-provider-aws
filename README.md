@@ -108,6 +108,10 @@ To this end, this provider supports the following extra specs schema:
             "type": "string",
             "description": "The name of the Key Pair to use for the instance."
         },
+        "iam_instance_profile": {
+            "type": "string",
+            "description": "The ARN of the IAM instance profile to use for the instance."
+        },
         "iops": {
             "type": "integer",
             "description": "Specifies the number of IOPS (Input/Output Operations Per Second) provisioned for the volume. Required for io1 and io2 volumes. Optional for gp3 volumes."
@@ -183,6 +187,7 @@ An example extra specs json would look like this:
 {
     "subnet_id":"subnet-0e7a29d5cf6e54789",
     "ssh_key_name":"Garm-test",
+    "iam_instance_profile": "arn:aws:iam::123456789012:instance-profile/application_abc/component_xyz/Webserver",
     "iops": 3000,
     "throughput": 200,
     "volume_size": 50,
@@ -205,7 +210,7 @@ An example extra specs json would look like this:
 }
 ```
 
-*NOTE*: The `extra_context` spec adds a map of key/value pairs that may be expected in the `runner_install_template`.
+> **NOTE**: The `extra_context` spec adds a map of key/value pairs that may be expected in the `runner_install_template`.
 The `runner_install_template` allows us to completely override the script that installs and starts the runner. In the example above, I have added a copy of the current template from `garm-provider-common`, with the adition of:
 
 ```bash
@@ -216,7 +221,11 @@ export PATH=$PATH:/usr/local/go/bin
 {{- end }}
 ```
 
-*NOTE*: `runner_install_template` is a [golang template](https://pkg.go.dev/text/template), which is used to install the runner. An example on how you can extend the currently existing template with a function that downloads, extracts and installs Go on the runner is provided above.
+> **NOTE**: `runner_install_template` is a [golang template](https://pkg.go.dev/text/template), which is used to install the runner. An example on how you can extend the currently existing template with a function that downloads, extracts and installs Go on the runner is provided above.
+
+#### **Warnings Regarding IAM Instance Profiles**
+
+When configuring Garm to use [IAM Instance Profiles](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/iam-roles-for-amazon-ec2.html#ec2-instance-profile) for your AWS runners, it’s important to be aware of the potential security implications. IAM Instance Profiles allow the instances to assume a role with permissions that can be broadly scoped, potentially granting more access than intended. Ensure that the IAM roles associated with your instance profiles adhere to the principle of least privilege, granting only the necessary permissions required for the runners to function. This setup is recommended only for private GitHub repositories, as using it with public repositories can expose your AWS environment to additional risks. Public repositories might inadvertently allow unauthorized access to your IAM credentials or resources. Therefore, use IAM Instance Profiles with public repositories at your own risk, and consider using alternative methods to securely manage credentials and permissions. Additionally, monitor and audit the actions performed by the instances regularly to ensure no unintended access to your AWS resources occurs.
 
 To set it on an existing pool, simply run:
 
