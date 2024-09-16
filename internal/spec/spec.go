@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/cloudbase/garm-provider-aws/config"
 	"github.com/cloudbase/garm-provider-common/cloudconfig"
 	"github.com/cloudbase/garm-provider-common/params"
@@ -41,6 +42,10 @@ const (
 				"ssh_key_name": {
 					"type": "string",
 					"description": "The name of the Key Pair to use for the instance."
+				},
+				"iam_instance_profile": {
+					"type": "string",
+					"description": "The ARN of the IAM instance profile to use for the instance."
 				},
 				"disable_updates": {
 					"type": "boolean",
@@ -112,11 +117,12 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 }
 
 type extraSpecs struct {
-	SubnetID        *string  `json:"subnet_id,omitempty"`
-	SSHKeyName      *string  `json:"ssh_key_name,omitempty"`
-	DisableUpdates  *bool    `json:"disable_updates"`
-	EnableBootDebug *bool    `json:"enable_boot_debug"`
-	ExtraPackages   []string `json:"extra_packages"`
+	SubnetID           *string  `json:"subnet_id,omitempty"`
+	SSHKeyName         *string  `json:"ssh_key_name,omitempty"`
+	IAMInstanceProfile *string  `json:"iam_instance_profile,omitempty"`
+	DisableUpdates     *bool    `json:"disable_updates"`
+	EnableBootDebug    *bool    `json:"enable_boot_debug"`
+	ExtraPackages      []string `json:"extra_packages"`
 }
 
 func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapInstance, controllerID string) (*RunnerSpec, error) {
@@ -145,15 +151,16 @@ func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapI
 }
 
 type RunnerSpec struct {
-	Region          string
-	DisableUpdates  bool
-	ExtraPackages   []string
-	EnableBootDebug bool
-	Tools           params.RunnerApplicationDownload
-	BootstrapParams params.BootstrapInstance
-	SubnetID        string
-	SSHKeyName      *string
-	ControllerID    string
+	Region             string
+	DisableUpdates     bool
+	ExtraPackages      []string
+	EnableBootDebug    bool
+	Tools              params.RunnerApplicationDownload
+	BootstrapParams    params.BootstrapInstance
+	SubnetID           string
+	SSHKeyName         *string
+	IAMInstanceProfile *types.IamInstanceProfileSpecification
+	ControllerID       string
 }
 
 func (r *RunnerSpec) Validate() error {
@@ -181,6 +188,12 @@ func (r *RunnerSpec) MergeExtraSpecs(extraSpecs *extraSpecs) {
 
 	if extraSpecs.EnableBootDebug != nil {
 		r.EnableBootDebug = *extraSpecs.EnableBootDebug
+	}
+
+	if extraSpecs.IAMInstanceProfile != nil {
+		r.IAMInstanceProfile = &types.IamInstanceProfileSpecification{
+			Arn: extraSpecs.IAMInstanceProfile,
+		}
 	}
 }
 
