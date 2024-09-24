@@ -21,84 +21,235 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/cloudbase/garm-provider-aws/config"
+	"github.com/cloudbase/garm-provider-common/cloudconfig"
 	"github.com/cloudbase/garm-provider-common/params"
 	"github.com/stretchr/testify/require"
 )
 
-func TestJsonSchemaValidation(t *testing.T) {
-	tests := []struct {
-		name      string
-		schema    json.RawMessage
-		errString string
-	}{
-		{
-			name:      "valid schema",
-			schema:    json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "runner_install_template", "extra_context": {"key": "value"}, "pre_install_scripts":{"script1": "script1", "script2": "script2"}}`),
-			errString: "",
-		},
-		{
-			name:      "invalid schema",
-			schema:    json.RawMessage(`{"subnet_id": "invalid_subnet_id"}`),
-			errString: "schema validation failed: [subnet_id: Does not match pattern '^subnet-[0-9a-fA-F]{17}$']",
-		},
-		{
-			name:      "extra argument schema",
-			schema:    json.RawMessage(`{"invalid_key": "invalid_value"}`),
-			errString: "Additional property invalid_key is not allowed",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			err := jsonSchemaValidation(tt.schema)
-			if tt.errString == "" {
-				require.NoError(t, err)
-			} else {
-				require.Error(t, err)
-				require.Contains(t, err.Error(), tt.errString)
-			}
-		})
-	}
-}
-
 func TestExtraSpecsFromBootstrapData(t *testing.T) {
 	tests := []struct {
-		name      string
-		bootstrap params.BootstrapInstance
-		errString string
+		name           string
+		input          params.BootstrapInstance
+		expectedOutput *extraSpecs
+		errString      string
 	}{
 		{
 			name: "valid bootstrap data",
-			bootstrap: params.BootstrapInstance{
-				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "runner_install_template", "extra_context": {"key": "value"}, "pre_install_scripts":{"script1": "script1", "script2": "script2"}}`),
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
+			},
+			expectedOutput: &extraSpecs{
+				SubnetID:        aws.String("subnet-0a0a0a0a0a0a0a0a0"),
+				SSHKeyName:      aws.String("ssh_key_name"),
+				DisableUpdates:  aws.Bool(true),
+				EnableBootDebug: aws.Bool(true),
+				ExtraPackages:   []string{"package1", "package2"},
+				CloudConfigSpec: cloudconfig.CloudConfigSpec{
+					RunnerInstallTemplate: []byte("#!/bin/bash\necho Installing runner..."),
+					PreInstallScripts: map[string][]byte{
+						"setup.sh": []byte("#!/bin/bash\necho Setup script..."),
+					},
+					ExtraContext: map[string]string{"key": "value"},
+				},
 			},
 			errString: "",
 		},
 		{
-			name: "invalid bootstrap data",
-			bootstrap: params.BootstrapInstance{
-				ExtraSpecs: json.RawMessage(`{"subnet_id": "invalid_subnet_id"}`),
+			name: "specs just with subnet_id",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0"}`),
 			},
-			errString: "schema validation failed: [subnet_id: Does not match pattern '^subnet-[0-9a-fA-F]{17}$']",
+			expectedOutput: &extraSpecs{
+				SubnetID: aws.String("subnet-0a0a0a0a0a0a0a0a0"),
+			},
+			errString: "",
+		},
+		{
+			name: "specs just with ssh_key_name",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"ssh_key_name": "ssh_key_name"}`),
+			},
+			expectedOutput: &extraSpecs{
+				SSHKeyName: aws.String("ssh_key_name"),
+			},
+			errString: "",
+		},
+		{
+			name: "specs just with disable_updates",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"disable_updates": true}`),
+			},
+			expectedOutput: &extraSpecs{
+				DisableUpdates: aws.Bool(true),
+			},
+			errString: "",
+		},
+		{
+			name: "specs just with enable_boot_debug",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"enable_boot_debug": true}`),
+			},
+			expectedOutput: &extraSpecs{
+				EnableBootDebug: aws.Bool(true),
+			},
+			errString: "",
+		},
+		{
+			name: "specs just with extra_packages",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"extra_packages": ["package1", "package2"]}`),
+			},
+			expectedOutput: &extraSpecs{
+				ExtraPackages: []string{"package1", "package2"},
+			},
+			errString: "",
+		},
+		{
+			name: "spec just with RunnerInstallTemplate",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg=="}`),
+			},
+			expectedOutput: &extraSpecs{
+				CloudConfigSpec: cloudconfig.CloudConfigSpec{
+					RunnerInstallTemplate: []byte("#!/bin/bash\necho Installing runner..."),
+				},
+			},
+			errString: "",
+		},
+		{
+			name: "spec just with PreInstallScripts",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}}`),
+			},
+			expectedOutput: &extraSpecs{
+				CloudConfigSpec: cloudconfig.CloudConfigSpec{
+					PreInstallScripts: map[string][]byte{
+						"setup.sh": []byte("#!/bin/bash\necho Setup script..."),
+					},
+				},
+			},
+			errString: "",
+		},
+		{
+			name: "spec just with ExtraContext",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"extra_context": {"key": "value"}}`),
+			},
+			expectedOutput: &extraSpecs{
+				CloudConfigSpec: cloudconfig.CloudConfigSpec{
+					ExtraContext: map[string]string{"key": "value"},
+				},
+			},
+			errString: "",
 		},
 		{
 			name: "missing extra specs",
-			bootstrap: params.BootstrapInstance{
+			input: params.BootstrapInstance{
 				ExtraSpecs: json.RawMessage(`{}`),
 			},
-			errString: "",
+			expectedOutput: &extraSpecs{},
+			errString:      "",
+		},
+		{
+			name: "invalid format for subnet_id",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-1"}`),
+			},
+			expectedOutput: nil,
+			errString:      "subnet_id: Does not match pattern '^subnet-[0-9a-fA-F]{17}$'",
+		},
+		{
+			name: "invalid type for subnet_id",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"subnet_id": true}`),
+			},
+			expectedOutput: nil,
+			errString:      "subnet_id: Invalid type. Expected: string, given: boolean",
+		},
+		{
+			name: "invalid type for ssh_key_name",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"ssh_key_name": 123}`),
+			},
+			expectedOutput: nil,
+			errString:      "ssh_key_name: Invalid type. Expected: string, given: integer",
+		},
+		{
+			name: "invalid type for disable_updates",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"disable_updates": "true"}`),
+			},
+			expectedOutput: nil,
+			errString:      "disable_updates: Invalid type. Expected: boolean, given: string",
+		},
+		{
+			name: "invalid type for enable_boot_debug",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"enable_boot_debug": "true"}`),
+			},
+			expectedOutput: nil,
+			errString:      "enable_boot_debug: Invalid type. Expected: boolean, given: string",
+		},
+		{
+			name: "invalid type for extra_packages",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"extra_packages": "package1"}`),
+			},
+			expectedOutput: nil,
+			errString:      "extra_packages: Invalid type. Expected: array, given: string",
+		},
+		{
+			name: "invalid type for runner_install_template",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"runner_install_template": 123}`),
+			},
+			expectedOutput: nil,
+			errString:      "runner_install_template: Invalid type. Expected: string, given: integer",
+		},
+		{
+			name: "invalid type for pre_install_scripts",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"pre_install_scripts": "setup.sh"}`),
+			},
+			expectedOutput: nil,
+			errString:      "pre_install_scripts: Invalid type. Expected: object, given: string",
+		},
+		{
+			name: "invalid type for extra_context",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"extra_context": 123}`),
+			},
+			expectedOutput: nil,
+			errString:      "extra_context: Invalid type. Expected: object, given: integer",
+		},
+		{
+			name: "invalid input - additional property",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"invalid": "invalid"}`),
+			},
+			expectedOutput: nil,
+			errString:      "Additional property invalid is not allowed",
+		},
+		{
+			name: "invalid input - invalid json",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"disable_updates": }`),
+			},
+			expectedOutput: nil,
+			errString:      "failed to validate extra specs",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := newExtraSpecsFromBootstrapData(tt.bootstrap)
+			output, err := newExtraSpecsFromBootstrapData(tt.input)
 			if tt.errString == "" {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tt.errString)
 			}
+			require.Equal(t, tt.expectedOutput, output)
 		})
 	}
 }
@@ -115,7 +266,8 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 	}
 
 	data := params.BootstrapInstance{
-		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "runner_install_template", "extra_context": {"key": "value"}, "pre_install_scripts":{"script1": "script1", "script2": "script2"}}`),
+		Name:       "mock-name",
+		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
 	}
 
 	config := &config.Config{
