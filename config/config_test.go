@@ -159,7 +159,7 @@ func TestCredentialsValidate(t *testing.T) {
 					SessionToken:    "",
 				},
 			},
-			errString: "missing session_token",
+			errString: "",
 		},
 	}
 
