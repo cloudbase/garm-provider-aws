@@ -85,10 +85,6 @@ func (c StaticCredentials) Validate() error {
 		return fmt.Errorf("missing secret_access_key")
 	}
 
-	if c.SessionToken == "" {
-		return fmt.Errorf("missing session_token")
-	}
-
 	return nil
 }
 
