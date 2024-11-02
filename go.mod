@@ -11,7 +11,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.20
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.165.0
 	github.com/aws/smithy-go v1.20.2
-	github.com/cloudbase/garm-provider-common v0.1.4-0.20240912084949-899c120c80ce
+	github.com/cloudbase/garm-provider-common v0.1.4-0.20241026163040-5b7633dfb896
 	github.com/invopop/jsonschema v0.12.0
 	github.com/stretchr/testify v1.9.0
 	github.com/xeipuuv/gojsonschema v1.2.0
