@@ -182,6 +182,11 @@ fi
 
 AGENT_ID=""
 {{- if .UseJITConfig }}
+if [ -f "$RUN_HOME/env.sh" ];then
+	pushd $RUN_HOME
+	source env.sh
+	popd
+fi
 sudo systemctl start $SVC_NAME || fail "failed to start service"
 {{- else}}
 sendStatus "starting service"
