@@ -36,14 +36,15 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 		{
 			name: "valid bootstrap data",
 			input: params.BootstrapInstance{
-				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
+				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"], "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
 			},
 			expectedOutput: &extraSpecs{
-				SubnetID:        aws.String("subnet-0a0a0a0a0a0a0a0a0"),
-				SSHKeyName:      aws.String("ssh_key_name"),
-				DisableUpdates:  aws.Bool(true),
-				EnableBootDebug: aws.Bool(true),
-				ExtraPackages:   []string{"package1", "package2"},
+				SubnetID:         aws.String("subnet-0a0a0a0a0a0a0a0a0"),
+				SSHKeyName:       aws.String("ssh_key_name"),
+				SecurityGroupIds: []string{"sg-018c35963edfb1cce", "sg-018c35963edfb1cee"},
+				DisableUpdates:   aws.Bool(true),
+				EnableBootDebug:  aws.Bool(true),
+				ExtraPackages:    []string{"package1", "package2"},
 				CloudConfigSpec: cloudconfig.CloudConfigSpec{
 					RunnerInstallTemplate: []byte("#!/bin/bash\necho Installing runner..."),
 					PreInstallScripts: map[string][]byte{
@@ -73,6 +74,15 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 				SSHKeyName: aws.String("ssh_key_name"),
 			},
 			errString: "",
+		},
+		{
+			name: "specs just with security_group_ids",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"]}`),
+			},
+			expectedOutput: &extraSpecs{
+				SecurityGroupIds: []string{"sg-018c35963edfb1cce", "sg-018c35963edfb1cee"},
+			},
 		},
 		{
 			name: "specs just with disable_updates",
@@ -175,6 +185,14 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 			errString:      "ssh_key_name: Invalid type. Expected: string, given: integer",
 		},
 		{
+			name: "invalid type for security_group_ids",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"security_group_ids": "sg-018c35963edfb1cce"}`),
+			},
+			expectedOutput: nil,
+			errString:      "security_group_ids: Invalid type. Expected: array, given: string",
+		},
+		{
 			name: "invalid type for disable_updates",
 			input: params.BootstrapInstance{
 				ExtraSpecs: json.RawMessage(`{"disable_updates": "true"}`),
@@ -267,7 +285,7 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 
 	data := params.BootstrapInstance{
 		Name:       "mock-name",
-		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
+		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"], "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
 	}
 
 	config := &config.Config{
@@ -283,15 +301,16 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 		Region:   "region",
 	}
 	expectedRunnerSpec := &RunnerSpec{
-		Region:          "region",
-		DisableUpdates:  true,
-		ExtraPackages:   []string{"package1", "package2"},
-		EnableBootDebug: true,
-		SubnetID:        "subnet-0a0a0a0a0a0a0a0a0",
-		Tools:           Mocktools,
-		ControllerID:    "controller_id",
-		BootstrapParams: data,
-		SSHKeyName:      aws.String("ssh_key_name"),
+		Region:           "region",
+		DisableUpdates:   true,
+		ExtraPackages:    []string{"package1", "package2"},
+		EnableBootDebug:  true,
+		SubnetID:         "subnet-0a0a0a0a0a0a0a0a0",
+		Tools:            Mocktools,
+		ControllerID:     "controller_id",
+		BootstrapParams:  data,
+		SSHKeyName:       aws.String("ssh_key_name"),
+		SecurityGroupIds: []string{"sg-018c35963edfb1cce", "sg-018c35963edfb1cee"},
 	}
 
 	runnerSpec, err := GetRunnerSpecFromBootstrapParams(config, data, "controller_id")

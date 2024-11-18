@@ -73,11 +73,12 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 }
 
 type extraSpecs struct {
-	SubnetID        *string  `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-[0-9a-fA-F]{17}$"`
-	SSHKeyName      *string  `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
-	DisableUpdates  *bool    `json:"disable_updates,omitempty" jsonschema:"description=Disable automatic updates on the VM."`
-	EnableBootDebug *bool    `json:"enable_boot_debug,omitempty" jsonschema:"description=Enable boot debug on the VM"`
-	ExtraPackages   []string `json:"extra_packages,omitempty" jsonschema:"description=Extra packages to install on the VM"`
+	SubnetID         *string  `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-[0-9a-fA-F]{17}$"`
+	SSHKeyName       *string  `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
+	SecurityGroupIds []string `json:"security_group_ids,omitempty" jsonschema:"description=The security groups IDs to associate with the instance. Default: Amazon EC2 uses the default security group."`
+	DisableUpdates   *bool    `json:"disable_updates,omitempty" jsonschema:"description=Disable automatic updates on the VM."`
+	EnableBootDebug  *bool    `json:"enable_boot_debug,omitempty" jsonschema:"description=Enable boot debug on the VM"`
+	ExtraPackages    []string `json:"extra_packages,omitempty" jsonschema:"description=Extra packages to install on the VM"`
 	// The Cloudconfig struct from common package
 	cloudconfig.CloudConfigSpec
 }
@@ -112,15 +113,16 @@ func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapI
 }
 
 type RunnerSpec struct {
-	Region          string
-	DisableUpdates  bool
-	ExtraPackages   []string
-	EnableBootDebug bool
-	Tools           params.RunnerApplicationDownload
-	BootstrapParams params.BootstrapInstance
-	SubnetID        string
-	SSHKeyName      *string
-	ControllerID    string
+	Region           string
+	DisableUpdates   bool
+	ExtraPackages    []string
+	EnableBootDebug  bool
+	Tools            params.RunnerApplicationDownload
+	BootstrapParams  params.BootstrapInstance
+	SecurityGroupIds []string
+	SubnetID         string
+	SSHKeyName       *string
+	ControllerID     string
 }
 
 func (r *RunnerSpec) Validate() error {
@@ -140,6 +142,10 @@ func (r *RunnerSpec) MergeExtraSpecs(extraSpecs *extraSpecs) {
 
 	if extraSpecs.SSHKeyName != nil {
 		r.SSHKeyName = extraSpecs.SSHKeyName
+	}
+
+	if len(extraSpecs.SecurityGroupIds) > 0 {
+		r.SecurityGroupIds = extraSpecs.SecurityGroupIds
 	}
 
 	if extraSpecs.DisableUpdates != nil {
