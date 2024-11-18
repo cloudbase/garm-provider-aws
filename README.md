@@ -108,6 +108,13 @@ To this end, this provider supports the following extra specs schema:
             "type": "string",
             "description": "The name of the Key Pair to use for the instance."
         },
+        "security_group_ids": {
+            "type": "array",
+            "description": "The security groups IDs to associate with the instance. Default: Amazon EC2 uses the default security group.",
+            "items": {
+                "type": "string"
+            }
+        },
         "disable_updates": {
             "type": "boolean",
             "description": "Disable automatic updates on the VM."
@@ -149,6 +156,7 @@ An example extra specs json would look like this:
 {
     "subnet_id":"subnet-0e7a29d5cf6e54789",
     "ssh_key_name":"Garm-test",
+    "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"],
     "disable_updates": true,
     "enable_boot_debug": true,
     "extra_context": {
