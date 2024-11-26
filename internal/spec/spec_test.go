@@ -290,7 +290,7 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 
 	data := params.BootstrapInstance{
 		Name:       "mock-name",
-		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"], "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
+		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"], "iops": 3000, "throughput": 200, "volume_size": 50, "volume_type": "gp3", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
 	}
 
 	config := &config.Config{
@@ -316,6 +316,10 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 		BootstrapParams:  data,
 		SSHKeyName:       aws.String("ssh_key_name"),
 		SecurityGroupIds: []string{"sg-018c35963edfb1cce", "sg-018c35963edfb1cee"},
+		Iops:             aws.Int32(3000),
+		VolumeType:       types.VolumeTypeGp3,
+		Throughput:       aws.Int32(200),
+		VolumeSize:       aws.Int32(50),
 	}
 
 	runnerSpec, err := GetRunnerSpecFromBootstrapParams(config, data, "controller_id")
@@ -364,6 +368,29 @@ func TestRunnerSpecValidate(t *testing.T) {
 				Iops:       aws.Int32(3000),
 				VolumeType: types.VolumeTypeGp3,
 				Throughput: aws.Int32(200),
+				VolumeSize: aws.Int32(50),
+			},
+		},
+		{
+			name: "valid runner spec with io2 volume type",
+			spec: &RunnerSpec{
+				Region:          "region",
+				DisableUpdates:  true,
+				ExtraPackages:   []string{"package1", "package2"},
+				EnableBootDebug: true,
+				Tools: params.RunnerApplicationDownload{
+					OS:           aws.String("linux"),
+					Architecture: aws.String("amd64"),
+					DownloadURL:  aws.String("MockURL"),
+					Filename:     aws.String("garm-runner"),
+				},
+				SubnetID:     "subnet_id",
+				ControllerID: "controller_id",
+				BootstrapParams: params.BootstrapInstance{
+					Name: "name",
+				},
+				Iops:       aws.Int32(3000),
+				VolumeType: types.VolumeTypeIo2,
 				VolumeSize: aws.Int32(50),
 			},
 		},

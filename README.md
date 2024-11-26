@@ -108,6 +108,22 @@ To this end, this provider supports the following extra specs schema:
             "type": "string",
             "description": "The name of the Key Pair to use for the instance."
         },
+        "iops": {
+            "type": "integer",
+            "description": "The number of IOPS (Input/Output Operations Per Second) to provision for the volume. Only valid for volume_type=io1."
+        },
+        "throughput": {
+            "type": "integer",
+            "description": "The throughput (MiB/s) to provision for the volume. Only valid for volume_type=gp3."
+        },
+        "volume_size": {
+            "type": "integer",
+            "description": "The size of the volume, in GiB. Default: 8."
+        },
+        "volume_type": {
+            "type": "string",
+            "description": "The volume type. Default: gp2."
+        },
         "security_group_ids": {
             "type": "array",
             "description": "The security groups IDs to associate with the instance. Default: Amazon EC2 uses the default security group.",
@@ -156,6 +172,10 @@ An example extra specs json would look like this:
 {
     "subnet_id":"subnet-0e7a29d5cf6e54789",
     "ssh_key_name":"Garm-test",
+    "iops": 3000,
+    "throughput": 200,
+    "volume_size": 50,
+    "volume_type": "gp3",
     "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"],
     "disable_updates": true,
     "enable_boot_debug": true,
@@ -196,3 +216,57 @@ garm-cli pool update --extra-specs='{"subnet_id":"subnet-0e7a29d5cf6e54789"}' <P
 You can also set a spec when creating a new pool, using the same flag.
 
 Workers in that pool will be created taking into account the specs you set on the pool.
+
+#### Supported Volume Parameters for Garm AWS Provider
+
+**NOTE**: The EBS Volume attached to the runner is configured to be deleted on termination and is set to have the `device name` set as `/dev/sda`.
+
+- `iops`
+
+    **Description**: Specifies the number of IOPS (Input/Output Operations Per Second) provisioned for the volume.
+    **Usage**:
+        **Required** for `io1` and `io2` volumes.
+        Optional for `gp3` volumes, with a default of 3,000 IOPS.
+        Not applicable for `gp2`, `st1`, `sc1`, or `standard` volumes.
+    **Valid Ranges**:
+        `gp3`: 3,000 - 16,000 IOPS
+        `io1`: 100 - 64,000 IOPS
+        `io2`: 100 - 256,000 IOPS (up to 32,000 IOPS on non-Nitro instances)
+    **Notes**:
+        For `gp2`, IOPS represents baseline performance and burst credit accumulation.
+
+- `throughput`
+
+    **Description**: Specifies the throughput (MiB/s) for the volume.
+    **Usage**:
+        **Valid only for `gp3` volumes**.
+        Not applicable for `gp2`, `io1`, `io2`, `st1`, `sc1`, or `standard` volumes.
+    **Valid Range**: 125 - 1,000 MiB/s
+
+- `volume_size`
+
+    **Description**: Specifies the size of the volume in GiB.
+    **Usage**:
+        Required unless a snapshot ID is provided.
+        Must be equal to or larger than the snapshot size if specified.
+    **Valid Ranges by Volume Type**:
+        `gp2` and gp3: 1 - 16,384 GiB
+        `io1`: 4 - 16,384 GiB
+        `io2`: 4 - 65,536 GiB
+        `st1` and sc1: 125 - 16,384 GiB
+        `standard`: 1 - 1,024 GiB
+
+- `volume_type`
+
+    **Description**: Specifies the EBS volume type.
+    **Supported Values**:
+        `gp2`: General-purpose SSD with baseline and burstable IOPS.
+        `gp3`: Next-generation SSD with configurable IOPS and throughput.
+        `io1`: High-performance SSD for critical workloads, requiring IOPS specification.
+        `io2`: High-performance SSD with enhanced durability, requiring IOPS specification.
+        `st1`: Throughput-optimized HDD for large sequential workloads.
+        `sc1`: Cold HDD for less-frequently accessed workloads.
+        `standard`: Magnetic storage for infrequent access.
+    **Default**: `gp2`
+
+**Note:** Ensure your instance type supports the IOPS and throughput configurations specified. For instance types built on the Nitro system, higher IOPS and throughput limits are supported. For more details on volume types and their use cases, refer to the [Amazon EBS User Guide](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html).
