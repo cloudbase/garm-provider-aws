@@ -110,19 +110,30 @@ To this end, this provider supports the following extra specs schema:
         },
         "iops": {
             "type": "integer",
-            "description": "The number of IOPS (Input/Output Operations Per Second) to provision for the volume. Only valid for volume_type=io1."
+            "description": "Specifies the number of IOPS (Input/Output Operations Per Second) provisioned for the volume. Required for io1 and io2 volumes. Optional for gp3 volumes."
         },
         "throughput": {
             "type": "integer",
-            "description": "The throughput (MiB/s) to provision for the volume. Only valid for volume_type=gp3."
+            "maximum": 1000,
+            "minimum": 125,
+            "description": "Specifies the throughput (MiB/s) provisioned for the volume. Valid only for gp3 volumes."
         },
         "volume_size": {
             "type": "integer",
-            "description": "The size of the volume, in GiB. Default: 8."
+            "description": "Specifies the size of the volume in GiB."
         },
         "volume_type": {
             "type": "string",
-            "description": "The volume type. Default: gp2."
+            "enum": [
+                "gp2",
+                "gp3",
+                "io1",
+                "io2",
+                "st1",
+                "sc1",
+                "standard"
+            ],
+            "description": "Specifies the EBS volume type."
         },
         "security_group_ids": {
             "type": "array",
@@ -250,10 +261,10 @@ Workers in that pool will be created taking into account the specs you set on th
         Required unless a snapshot ID is provided.
         Must be equal to or larger than the snapshot size if specified.
     **Valid Ranges by Volume Type**:
-        `gp2` and gp3: 1 - 16,384 GiB
+        `gp2 and gp3`: 1 - 16,384 GiB
         `io1`: 4 - 16,384 GiB
         `io2`: 4 - 65,536 GiB
-        `st1` and sc1: 125 - 16,384 GiB
+        `st1 and sc1`: 125 - 16,384 GiB
         `standard`: 1 - 1,024 GiB
 
 - `volume_type`
