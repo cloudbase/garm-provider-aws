@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/cloudbase/garm-provider-aws/config"
 	"github.com/cloudbase/garm-provider-common/cloudconfig"
 	"github.com/cloudbase/garm-provider-common/params"
@@ -73,13 +74,16 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 }
 
 type extraSpecs struct {
-	SubnetID         *string  `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-[0-9a-fA-F]{17}$"`
-	SSHKeyName       *string  `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
-	SecurityGroupIds []string `json:"security_group_ids,omitempty" jsonschema:"description=The security groups IDs to associate with the instance. Default: Amazon EC2 uses the default security group."`
-	DisableUpdates   *bool    `json:"disable_updates,omitempty" jsonschema:"description=Disable automatic updates on the VM."`
-	EnableBootDebug  *bool    `json:"enable_boot_debug,omitempty" jsonschema:"description=Enable boot debug on the VM"`
-	ExtraPackages    []string `json:"extra_packages,omitempty" jsonschema:"description=Extra packages to install on the VM"`
-	// The Cloudconfig struct from common package
+	SubnetID         *string          `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-[0-9a-fA-F]{17}$,description=The ID of the subnet formatted as subnet-xxxxxxxxxxxxxxxxx."`
+	SSHKeyName       *string          `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
+	Iops             *int32           `json:"iops,omitempty" jsonschema:"description=Specifies the number of IOPS (Input/Output Operations Per Second) provisioned for the volume. Required for io1 and io2 volumes. Optional for gp3 volumes."`
+	Throughput       *int32           `json:"throughput,omitempty" jsonschema:"description=Specifies the throughput (MiB/s) provisioned for the volume. Valid only for gp3 volumes.,minimum=125,maximum=1000"`
+	VolumeSize       *int32           `json:"volume_size,omitempty" jsonschema:"description=Specifies the size of the volume in GiB. Required unless a snapshot ID is provided."`
+	VolumeType       types.VolumeType `json:"volume_type,omitempty" jsonschema:"enum=gp2,enum=gp3,enum=io1,enum=io2,enum=st1,enum=sc1,enum=standard,description=Specifies the EBS volume type."`
+	SecurityGroupIds []string         `json:"security_group_ids,omitempty" jsonschema:"description=The security group IDs to associate with the instance. Default: Amazon EC2 uses the default security group."`
+	DisableUpdates   *bool            `json:"disable_updates,omitempty" jsonschema:"description=Disable automatic updates on the VM."`
+	EnableBootDebug  *bool            `json:"enable_boot_debug,omitempty" jsonschema:"description=Enable boot debug on the VM."`
+	ExtraPackages    []string         `json:"extra_packages,omitempty" jsonschema:"description=Extra packages to install on the VM."`
 	cloudconfig.CloudConfigSpec
 }
 
@@ -122,6 +126,10 @@ type RunnerSpec struct {
 	SecurityGroupIds []string
 	SubnetID         string
 	SSHKeyName       *string
+	Iops             *int32
+	Throughput       *int32
+	VolumeSize       *int32
+	VolumeType       types.VolumeType
 	ControllerID     string
 }
 
@@ -132,12 +140,84 @@ func (r *RunnerSpec) Validate() error {
 	if r.BootstrapParams.Name == "" {
 		return fmt.Errorf("missing bootstrap params")
 	}
+	if r.Iops != nil {
+		switch r.VolumeType {
+		case types.VolumeTypeIo1:
+			if *r.Iops < 100 || *r.Iops > 64000 {
+				return fmt.Errorf("EBS iops for volume type %s must be between 100 and 64000", r.VolumeType)
+			}
+		case types.VolumeTypeIo2:
+			if *r.Iops < 100 || *r.Iops > 256000 {
+				return fmt.Errorf("EBS iops for volume type %s must be between 100 and 256000", r.VolumeType)
+			}
+		case types.VolumeTypeGp3:
+			if *r.Iops < 3000 || *r.Iops > 16000 {
+				return fmt.Errorf("EBS iops for volume type %s must be between 3000 and 16000", r.VolumeType)
+			}
+		default:
+			return fmt.Errorf("EBS iops is only valid for volume types io1, io2 and gp3")
+		}
+	}
+	if r.Throughput != nil && r.VolumeType != types.VolumeTypeGp3 {
+		return fmt.Errorf("EBS throughput is only valid for volume type gp3")
+	}
+	if r.VolumeSize != nil {
+		switch r.VolumeType {
+		case types.VolumeTypeIo1:
+			if *r.VolumeSize < 4 || *r.VolumeSize > 16384 {
+				return fmt.Errorf("EBS volume size for volume type %s must be between 4 and 16384", r.VolumeType)
+			}
+		case types.VolumeTypeIo2:
+			if *r.VolumeSize < 4 || *r.VolumeSize > 16384 {
+				return fmt.Errorf("EBS volume size for volume type %s must be between 4 and 16384", r.VolumeType)
+			}
+		case types.VolumeTypeGp2, types.VolumeTypeGp3:
+			if *r.VolumeSize < 1 || *r.VolumeSize > 16384 {
+				return fmt.Errorf("EBS volume size for volume type %s must be between 1 and 16384", r.VolumeType)
+			}
+		case types.VolumeTypeSt1, types.VolumeTypeSc1:
+			if *r.VolumeSize < 125 || *r.VolumeSize > 16384 {
+				return fmt.Errorf("EBS volume size for volume type %s must be between 125 and 16384", r.VolumeType)
+			}
+		case types.VolumeTypeStandard, "":
+			if *r.VolumeSize < 1 || *r.VolumeSize > 1024 {
+				return fmt.Errorf("EBS volume size for volume type standard must be between 1 and 1024")
+			}
+		default:
+			return fmt.Errorf("EBS volume size is only valid for volume types io1, io2, gp2, gp3, st1, sc1 and standard")
+		}
+	}
+
+	if r.VolumeType != "" {
+		switch r.VolumeType {
+		case types.VolumeTypeIo1, types.VolumeTypeIo2:
+			if r.Iops == nil {
+				return fmt.Errorf("the parameter iops must be specified for %s volumes", r.VolumeType)
+			}
+		}
+	}
 	return nil
 }
 
 func (r *RunnerSpec) MergeExtraSpecs(extraSpecs *extraSpecs) {
 	if extraSpecs.SubnetID != nil && *extraSpecs.SubnetID != "" {
 		r.SubnetID = *extraSpecs.SubnetID
+	}
+
+	if extraSpecs.Iops != nil {
+		r.Iops = extraSpecs.Iops
+	}
+
+	if extraSpecs.Throughput != nil {
+		r.Throughput = extraSpecs.Throughput
+	}
+
+	if extraSpecs.VolumeSize != nil {
+		r.VolumeSize = extraSpecs.VolumeSize
+	}
+
+	if extraSpecs.VolumeType != "" {
+		r.VolumeType = extraSpecs.VolumeType
 	}
 
 	if extraSpecs.SSHKeyName != nil {

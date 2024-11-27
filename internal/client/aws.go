@@ -252,6 +252,18 @@ func (a *AwsCli) CreateRunningInstance(ctx context.Context, spec *spec.RunnerSpe
 		SecurityGroupIds: spec.SecurityGroupIds,
 		UserData:         aws.String(udata),
 		KeyName:          spec.SSHKeyName,
+		BlockDeviceMappings: []types.BlockDeviceMapping{
+			{
+				DeviceName: aws.String("/dev/sda1"),
+				Ebs: &types.EbsBlockDevice{
+					DeleteOnTermination: aws.Bool(true),
+					Iops:                spec.Iops,
+					Throughput:          spec.Throughput,
+					VolumeSize:          spec.VolumeSize,
+					VolumeType:          spec.VolumeType,
+				},
+			},
+		},
 		TagSpecifications: []types.TagSpecification{
 			{
 				ResourceType: types.ResourceTypeInstance,
