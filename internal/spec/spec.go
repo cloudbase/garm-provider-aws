@@ -74,16 +74,17 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 }
 
 type extraSpecs struct {
-	SubnetID         *string          `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-[0-9a-fA-F]{17}$,description=The ID of the subnet formatted as subnet-xxxxxxxxxxxxxxxxx."`
-	SSHKeyName       *string          `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
-	Iops             *int32           `json:"iops,omitempty" jsonschema:"description=Specifies the number of IOPS (Input/Output Operations Per Second) provisioned for the volume. Required for io1 and io2 volumes. Optional for gp3 volumes."`
-	Throughput       *int32           `json:"throughput,omitempty" jsonschema:"description=Specifies the throughput (MiB/s) provisioned for the volume. Valid only for gp3 volumes.,minimum=125,maximum=1000"`
-	VolumeSize       *int32           `json:"volume_size,omitempty" jsonschema:"description=Specifies the size of the volume in GiB. Required unless a snapshot ID is provided."`
-	VolumeType       types.VolumeType `json:"volume_type,omitempty" jsonschema:"enum=gp2,enum=gp3,enum=io1,enum=io2,enum=st1,enum=sc1,enum=standard,description=Specifies the EBS volume type."`
-	SecurityGroupIds []string         `json:"security_group_ids,omitempty" jsonschema:"description=The security group IDs to associate with the instance. Default: Amazon EC2 uses the default security group."`
-	DisableUpdates   *bool            `json:"disable_updates,omitempty" jsonschema:"description=Disable automatic updates on the VM."`
-	EnableBootDebug  *bool            `json:"enable_boot_debug,omitempty" jsonschema:"description=Enable boot debug on the VM."`
-	ExtraPackages    []string         `json:"extra_packages,omitempty" jsonschema:"description=Extra packages to install on the VM."`
+	SubnetID           *string          `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-[0-9a-fA-F]{17}$,description=The ID of the subnet formatted as subnet-xxxxxxxxxxxxxxxxx."`
+	SSHKeyName         *string          `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
+	IAMInstanceProfile *string          `json:"iam_instance_profile,omitempty jsonschema:"description=The IAM instance profile to associate with the instance."`
+	Iops               *int32           `json:"iops,omitempty" jsonschema:"description=Specifies the number of IOPS (Input/Output Operations Per Second) provisioned for the volume. Required for io1 and io2 volumes. Optional for gp3 volumes."`
+	Throughput         *int32           `json:"throughput,omitempty" jsonschema:"description=Specifies the throughput (MiB/s) provisioned for the volume. Valid only for gp3 volumes.,minimum=125,maximum=1000"`
+	VolumeSize         *int32           `json:"volume_size,omitempty" jsonschema:"description=Specifies the size of the volume in GiB. Required unless a snapshot ID is provided."`
+	VolumeType         types.VolumeType `json:"volume_type,omitempty" jsonschema:"enum=gp2,enum=gp3,enum=io1,enum=io2,enum=st1,enum=sc1,enum=standard,description=Specifies the EBS volume type."`
+	SecurityGroupIds   []string         `json:"security_group_ids,omitempty" jsonschema:"description=The security group IDs to associate with the instance. Default: Amazon EC2 uses the default security group."`
+	DisableUpdates     *bool            `json:"disable_updates,omitempty" jsonschema:"description=Disable automatic updates on the VM."`
+	EnableBootDebug    *bool            `json:"enable_boot_debug,omitempty" jsonschema:"description=Enable boot debug on the VM."`
+	ExtraPackages      []string         `json:"extra_packages,omitempty" jsonschema:"description=Extra packages to install on the VM."`
 	cloudconfig.CloudConfigSpec
 }
 
@@ -117,20 +118,21 @@ func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapI
 }
 
 type RunnerSpec struct {
-	Region           string
-	DisableUpdates   bool
-	ExtraPackages    []string
-	EnableBootDebug  bool
-	Tools            params.RunnerApplicationDownload
-	BootstrapParams  params.BootstrapInstance
-	SecurityGroupIds []string
-	SubnetID         string
-	SSHKeyName       *string
-	Iops             *int32
-	Throughput       *int32
-	VolumeSize       *int32
-	VolumeType       types.VolumeType
-	ControllerID     string
+	Region             string
+	DisableUpdates     bool
+	ExtraPackages      []string
+	EnableBootDebug    bool
+	Tools              params.RunnerApplicationDownload
+	BootstrapParams    params.BootstrapInstance
+	SecurityGroupIds   []string
+	SubnetID           string
+	SSHKeyName         *string
+	IAMInstanceProfile *types.IamInstanceProfileSpecification
+	Iops               *int32
+	Throughput         *int32
+	VolumeSize         *int32
+	VolumeType         types.VolumeType
+	ControllerID       string
 }
 
 func (r *RunnerSpec) Validate() error {
@@ -234,6 +236,12 @@ func (r *RunnerSpec) MergeExtraSpecs(extraSpecs *extraSpecs) {
 
 	if extraSpecs.EnableBootDebug != nil {
 		r.EnableBootDebug = *extraSpecs.EnableBootDebug
+	}
+
+	if extraSpecs.IAMInstanceProfile != nil {
+		r.IAMInstanceProfile = &types.IamInstanceProfileSpecification{
+			Arn: extraSpecs.IAMInstanceProfile,
+		}
 	}
 }
 
