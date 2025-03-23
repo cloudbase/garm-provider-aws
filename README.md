@@ -102,7 +102,7 @@ To this end, this provider supports the following extra specs schema:
     "properties": {
         "subnet_id": {
             "type": "string",
-            "pattern": "^subnet-[0-9a-fA-F]{17}$"
+            "pattern": "^subnet-(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{17})$"
         },
         "ssh_key_name": {
             "type": "string",
