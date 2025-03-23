@@ -74,7 +74,7 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 }
 
 type extraSpecs struct {
-	SubnetID           *string          `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-[0-9a-fA-F]{17}$,description=The ID of the subnet formatted as subnet-xxxxxxxxxxxxxxxxx."`
+	SubnetID           *string          `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{17})$,description=The ID of the subnet formatted as subnet-xxxxxxxxxxxxxxxxx."`
 	SSHKeyName         *string          `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
 	IAMInstanceProfile *string          `json:"iam_instance_profile,omitempty jsonschema:"description=The IAM instance profile to associate with the instance."`
 	Iops               *int32           `json:"iops,omitempty" jsonschema:"description=Specifies the number of IOPS (Input/Output Operations Per Second) provisioned for the volume. Required for io1 and io2 volumes. Optional for gp3 volumes."`

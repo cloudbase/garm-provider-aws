@@ -71,6 +71,16 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 			errString: "",
 		},
 		{
+			name: "specs just with older version of subnet_id",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-12345678"}`),
+			},
+			expectedOutput: &extraSpecs{
+				SubnetID: aws.String("subnet-12345678"),
+			},
+			errString: "",
+		},
+		{
 			name: "specs just with ssh_key_name",
 			input: params.BootstrapInstance{
 				ExtraSpecs: json.RawMessage(`{"ssh_key_name": "ssh_key_name"}`),
@@ -171,7 +181,7 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-1"}`),
 			},
 			expectedOutput: nil,
-			errString:      "subnet_id: Does not match pattern '^subnet-[0-9a-fA-F]{17}$'",
+			errString:      "subnet_id: Does not match pattern '^subnet-(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{17})$'",
 		},
 		{
 			name: "invalid type for subnet_id",
