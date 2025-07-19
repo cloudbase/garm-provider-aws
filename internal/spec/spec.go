@@ -16,6 +16,8 @@
 package spec
 
 import (
+	"archive/zip"
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -250,22 +252,39 @@ func (r *RunnerSpec) ComposeUserData() (string, error) {
 	bootstrapParams.UserDataOptions.DisableUpdatesOnBoot = r.DisableUpdates
 	bootstrapParams.UserDataOptions.ExtraPackages = r.ExtraPackages
 	bootstrapParams.UserDataOptions.EnableBootDebug = r.EnableBootDebug
+
+	var udata []byte
 	switch bootstrapParams.OSType {
 	case params.Linux:
-		udata, err := cloudconfig.GetCloudConfig(bootstrapParams, r.Tools, bootstrapParams.Name)
+		cloudCfg, err := cloudconfig.GetCloudConfig(bootstrapParams, r.Tools, bootstrapParams.Name)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate userdata: %w", err)
 		}
-		asBase64 := base64.StdEncoding.EncodeToString([]byte(udata))
-		return asBase64, nil
+		udata = []byte(cloudCfg)
 	case params.Windows:
-		udata, err := cloudconfig.GetCloudConfig(bootstrapParams, r.Tools, bootstrapParams.Name)
+		cloudCfg, err := cloudconfig.GetCloudConfig(bootstrapParams, r.Tools, bootstrapParams.Name)
 		if err != nil {
 			return "", fmt.Errorf("failed to generate userdata: %w", err)
 		}
-		wrapped := fmt.Sprintf("<powershell>%s</powershell>", udata)
-		asBase64 := base64.StdEncoding.EncodeToString([]byte(wrapped))
-		return asBase64, nil
+		wrapped := fmt.Sprintf("<powershell>%s</powershell>", cloudCfg)
+		udata = []byte(wrapped)
+	default:
+		return "", fmt.Errorf("unsupported OS type for cloud config: %s", bootstrapParams.OSType)
 	}
-	return "", fmt.Errorf("unsupported OS type for cloud config: %s", bootstrapParams.OSType)
+
+	var b bytes.Buffer
+	zipped := zip.NewWriter(&b)
+	fd, err := zipped.Create("udata")
+	if err != nil {
+		return "", err
+	}
+	if _, err := fd.Write(udata); err != nil {
+		return "", fmt.Errorf("failed to compress cloud config: %w", err)
+	}
+	if err := zipped.Close(); err != nil {
+		return "", err
+	}
+
+	asBase64 := base64.StdEncoding.EncodeToString(b.Bytes())
+	return asBase64, nil
 }
