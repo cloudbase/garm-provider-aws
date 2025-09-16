@@ -18,6 +18,7 @@ package spec
 import (
 	"archive/zip"
 	"bytes"
+	"compress/gzip"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -261,6 +262,7 @@ func (r *RunnerSpec) ComposeUserData() (string, error) {
 			return "", fmt.Errorf("failed to generate userdata: %w", err)
 		}
 		udata = []byte(cloudCfg)
+
 	case params.Windows:
 		cloudCfg, err := cloudconfig.GetCloudConfig(bootstrapParams, r.Tools, bootstrapParams.Name)
 		if err != nil {
@@ -272,19 +274,42 @@ func (r *RunnerSpec) ComposeUserData() (string, error) {
 		return "", fmt.Errorf("unsupported OS type for cloud config: %s", bootstrapParams.OSType)
 	}
 
-	var b bytes.Buffer
-	zipped := zip.NewWriter(&b)
-	fd, err := zipped.Create("udata")
+	udata, err := maybeCompressUserdata(udata, bootstrapParams.OSType)
 	if err != nil {
 		return "", err
 	}
-	if _, err := fd.Write(udata); err != nil {
-		return "", fmt.Errorf("failed to compress cloud config: %w", err)
-	}
-	if err := zipped.Close(); err != nil {
-		return "", err
+
+	asBase64 := base64.StdEncoding.EncodeToString(udata)
+	return asBase64, nil
+}
+
+func maybeCompressUserdata(udata []byte, targetOS params.OSType) ([]byte, error) {
+	if len(udata) < 1<<14 {
+		return udata, nil
 	}
 
-	asBase64 := base64.StdEncoding.EncodeToString(b.Bytes())
-	return asBase64, nil
+	var b bytes.Buffer
+	switch targetOS {
+	case params.Windows:
+		zipped := zip.NewWriter(&b)
+		fd, err := zipped.Create("udata")
+		if err != nil {
+			return nil, err
+		}
+		if _, err := fd.Write(udata); err != nil {
+			return nil, fmt.Errorf("failed to compress cloud config: %w", err)
+		}
+		if err := zipped.Close(); err != nil {
+			return nil, err
+		}
+	default:
+		gzipped := gzip.NewWriter(&b)
+		if _, err := gzipped.Write(udata); err != nil {
+			return nil, fmt.Errorf("failed to compress cloud config: %w", err)
+		}
+		if err := gzipped.Close(); err != nil {
+			return nil, err
+		}
+	}
+	return b.Bytes(), nil
 }
