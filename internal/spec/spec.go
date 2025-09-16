@@ -284,7 +284,7 @@ func (r *RunnerSpec) ComposeUserData() (string, error) {
 }
 
 func maybeCompressUserdata(udata []byte, targetOS params.OSType) ([]byte, error) {
-	if len(udata) < 1<<24 {
+	if len(udata) < 1<<14 {
 		return udata, nil
 	}
 
