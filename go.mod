@@ -13,7 +13,7 @@ require (
 	github.com/aws/smithy-go v1.22.4
 	github.com/cloudbase/garm-provider-common v0.1.6
 	github.com/invopop/jsonschema v0.13.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.1
 	github.com/xeipuuv/gojsonschema v1.2.0
 )
 
