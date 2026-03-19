@@ -1363,6 +1363,10 @@ type CancelSpotFleetRequestsSuccessItem struct {
 // Information about instance capacity usage for a Capacity Reservation.
 type CapacityAllocation struct {
 
+	// Additional metadata associated with the capacity allocation. Each entry
+	// contains a key-value pair providing context about the allocation.
+	AllocationMetadata []CapacityAllocationMetadataEntry
+
 	// The usage type. used indicates that the instance capacity is in use by
 	// instances that are running in the Capacity Reservation.
 	AllocationType AllocationType
@@ -1370,6 +1374,18 @@ type CapacityAllocation struct {
 	// The amount of instance capacity associated with the usage. For example a value
 	// of 4 indicates that instance capacity for 4 instances is currently in use.
 	Count *int32
+
+	noSmithyDocumentSerde
+}
+
+// A key-value pair that provides additional metadata about a capacity allocation.
+type CapacityAllocationMetadataEntry struct {
+
+	// The key of the metadata entry.
+	Key *string
+
+	// The value of the metadata entry.
+	Value *string
 
 	noSmithyDocumentSerde
 }
@@ -3821,6 +3837,26 @@ type DeclarativePoliciesReport struct {
 	//
 	//   - For account: 123456789012
 	TargetId *string
+
+	noSmithyDocumentSerde
+}
+
+// Indicates default conntrack information for the instance type. For more
+// information, see [Connection tracking timeouts]in the Amazon EC2 User Guide.
+//
+// [Connection tracking timeouts]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/security-group-connection-tracking.html#connection-tracking-timeouts
+type DefaultConnectionTrackingConfiguration struct {
+
+	// Default timeout (in seconds) for idle TCP connections in an established state.
+	DefaultTcpEstablishedTimeout *int32
+
+	// Default timeout (in seconds) for idle UDP flows classified as streams which
+	// have seen more than one request-response transaction.
+	DefaultUdpStreamTimeout *int32
+
+	// Default timeout (in seconds) for idle UDP flows that have seen traffic only in
+	// a single direction or a single request-response transaction.
+	DefaultUdpTimeout *int32
 
 	noSmithyDocumentSerde
 }
@@ -15644,6 +15680,9 @@ type NetworkInfo struct {
 	// A list of valid settings for configurable bandwidth weighting for the instance
 	// type, if supported.
 	BandwidthWeightings []BandwidthWeightingType
+
+	// Indicates conntrack information for the instance type
+	ConnectionTrackingConfiguration *DefaultConnectionTrackingConfiguration
 
 	// The index of the default network card, starting at 0.
 	DefaultNetworkCardIndex *int32

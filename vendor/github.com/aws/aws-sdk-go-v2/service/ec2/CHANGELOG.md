@@ -1,3 +1,15 @@
+# v1.295.0 (2026-03-18)
+
+* **Feature**: The DescribeInstanceTypes API now returns default connection tracking timeout values for TCP, UDP, and UDP stream via the new connectionTrackingConfiguration field on NetworkInfo.
+
+# v1.294.1 (2026-03-13)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.294.0 (2026-03-05)
+
+* **Feature**: Added metadata field to CapacityAllocation.
+
 # v1.293.1 (2026-03-03)
 
 * **Dependency Update**: Bump minimum Go version to 1.24
