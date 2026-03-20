@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.4
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.12
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.295.0
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.296.0
 	github.com/aws/smithy-go v1.24.2
 	github.com/cloudbase/garm-provider-common v0.1.8
 	github.com/invopop/jsonschema v0.13.0
