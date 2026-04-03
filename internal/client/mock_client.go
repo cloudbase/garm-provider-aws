@@ -50,3 +50,8 @@ func (m *MockComputeClient) RunInstances(ctx context.Context, params *ec2.RunIns
 	args := m.Called(ctx, params, optFns)
 	return args.Get(0).(*ec2.RunInstancesOutput), args.Error(1)
 }
+
+func (m *MockComputeClient) DescribeImages(ctx context.Context, params *ec2.DescribeImagesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeImagesOutput, error) {
+	args := m.Called(ctx, params, optFns)
+	return args.Get(0).(*ec2.DescribeImagesOutput), args.Error(1)
+}

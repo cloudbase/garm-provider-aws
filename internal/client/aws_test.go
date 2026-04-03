@@ -377,7 +377,17 @@ func TestCreateRunningInstance(t *testing.T) {
 		SSHKeyName:   aws.String("SSHKeyName"),
 		ControllerID: "controllerID",
 	}
-	mockClient.On("RunInstances", ctx, mock.Anything, mock.Anything).Return(&ec2.RunInstancesOutput{
+	mockClient.On("DescribeImages", ctx, mock.Anything, mock.Anything).Return(&ec2.DescribeImagesOutput{
+		Images: []types.Image{
+			{
+				ImageId:        aws.String("ami-12345678"),
+				RootDeviceName: aws.String("/dev/abcd"),
+			},
+		},
+	}, nil)
+	mockClient.On("RunInstances", ctx, mock.MatchedBy(func(input *ec2.RunInstancesInput) bool {
+		return len(input.BlockDeviceMappings) == 1 && *input.BlockDeviceMappings[0].DeviceName == "/dev/abcd"
+	}), mock.Anything).Return(&ec2.RunInstancesOutput{
 		Instances: []types.Instance{
 			{
 				InstanceId: aws.String(instanceID),

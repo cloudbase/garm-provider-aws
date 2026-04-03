@@ -51,6 +51,7 @@ type ClientInterface interface {
 	DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error)
 	TerminateInstances(ctx context.Context, params *ec2.TerminateInstancesInput, optFns ...func(*ec2.Options)) (*ec2.TerminateInstancesOutput, error)
 	RunInstances(ctx context.Context, params *ec2.RunInstancesInput, optFns ...func(*ec2.Options)) (*ec2.RunInstancesOutput, error)
+	DescribeImages(ctx context.Context, params *ec2.DescribeImagesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeImagesOutput, error)
 }
 
 type AwsCli struct {
@@ -243,6 +244,25 @@ func (a *AwsCli) CreateRunningInstance(ctx context.Context, spec *spec.RunnerSpe
 		return "", fmt.Errorf("failed to compose user data: %w", err)
 	}
 
+	images, err := a.client.DescribeImages(ctx, &ec2.DescribeImagesInput{
+		Filters: []types.Filter{
+			{
+				Name:   aws.String("image-id"),
+				Values: []string{spec.BootstrapParams.Image},
+			},
+		},
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to query AMI root volume: %w", err)
+	}
+	if len(images.Images) != 1 {
+		return "", fmt.Errorf("failed to query AMI root volume: AMI %s not found", spec.BootstrapParams.Image)
+	}
+	if images.Images[0].RootDeviceName == nil {
+		return "", fmt.Errorf("failed to query AMI root volume: root device is nil")
+	}
+	root_volume := *images.Images[0].RootDeviceName
+
 	resp, err := a.client.RunInstances(ctx, &ec2.RunInstancesInput{
 		ImageId:            aws.String(spec.BootstrapParams.Image),
 		InstanceType:       types.InstanceType(spec.BootstrapParams.Flavor),
@@ -255,7 +275,7 @@ func (a *AwsCli) CreateRunningInstance(ctx context.Context, spec *spec.RunnerSpe
 		IamInstanceProfile: spec.IAMInstanceProfile,
 		BlockDeviceMappings: []types.BlockDeviceMapping{
 			{
-				DeviceName: aws.String("/dev/sda1"),
+				DeviceName: aws.String(root_volume),
 				Ebs: &types.EbsBlockDevice{
 					DeleteOnTermination: aws.Bool(true),
 					Iops:                spec.Iops,
