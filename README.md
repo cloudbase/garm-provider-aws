@@ -239,7 +239,7 @@ Workers in that pool will be created taking into account the specs you set on th
 
 #### Supported Volume Parameters for Garm AWS Provider
 
-**NOTE**: The EBS Volume attached to the runner is configured to be deleted on termination and is set to have the `device name` set as `/dev/sda`.
+**NOTE**: The EBS Volume attached to the runner is configured to be deleted on termination and is the root volume according to the AMI.
 
 - `iops`
 
