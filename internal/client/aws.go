@@ -263,6 +263,14 @@ func (a *AwsCli) CreateRunningInstance(ctx context.Context, spec *spec.RunnerSpe
 	}
 	root_volume := *images.Images[0].RootDeviceName
 
+	tags := []types.Tag{{Key: aws.String("Name"), Value: aws.String(spec.BootstrapParams.Name)}, {Key: aws.String("GARM_POOL_ID"), Value: aws.String(spec.BootstrapParams.PoolID)}, {Key: aws.String("OSType"), Value: aws.String(string(spec.BootstrapParams.OSType))}, {Key: aws.String("OSArch"), Value: aws.String(string(spec.BootstrapParams.OSArch))}, {Key: aws.String("GARM_CONTROLLER_ID"), Value: aws.String(spec.ControllerID)}}
+	for key, value := range a.cfg.Tags {
+		tags = append(tags, types.Tag{Key: aws.String(key), Value: aws.String(value)})
+	}
+	tagSpecs := []types.TagSpecification{}
+	for _, resourceType := range []types.ResourceType{types.ResourceTypeInstance, types.ResourceTypeVolume, types.ResourceTypeNetworkInterface} {
+		tagSpecs = append(tagSpecs, types.TagSpecification{ResourceType: resourceType, Tags: tags})
+	}
 	resp, err := a.client.RunInstances(ctx, &ec2.RunInstancesInput{
 		ImageId:            aws.String(spec.BootstrapParams.Image),
 		InstanceType:       types.InstanceType(spec.BootstrapParams.Flavor),
@@ -285,33 +293,8 @@ func (a *AwsCli) CreateRunningInstance(ctx context.Context, spec *spec.RunnerSpe
 				},
 			},
 		},
-		TagSpecifications: []types.TagSpecification{
-			{
-				ResourceType: types.ResourceTypeInstance,
-				Tags: []types.Tag{
-					{
-						Key:   aws.String("Name"),
-						Value: aws.String(spec.BootstrapParams.Name),
-					},
-					{
-						Key:   aws.String("GARM_POOL_ID"),
-						Value: aws.String(spec.BootstrapParams.PoolID),
-					},
-					{
-						Key:   aws.String("OSType"),
-						Value: aws.String(string(spec.BootstrapParams.OSType)),
-					},
-					{
-						Key:   aws.String("OSArch"),
-						Value: aws.String(string(spec.BootstrapParams.OSArch)),
-					},
-					{
-						Key:   aws.String("GARM_CONTROLLER_ID"),
-						Value: aws.String(spec.ControllerID),
-					},
-				},
-			},
-		},
+		TagSpecifications:                 tagSpecs,
+		InstanceInitiatedShutdownBehavior: types.ShutdownBehavior(a.cfg.InstanceInitiatedShutdownBehavior),
 	})
 	if err != nil {
 		return "", fmt.Errorf("failed to create instance: %w", err)
