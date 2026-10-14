@@ -385,8 +385,24 @@ func TestCreateRunningInstance(t *testing.T) {
 			},
 		},
 	}, nil)
+	cfg.Tags = map[string]string{"project": "test"}
+	cfg.InstanceInitiatedShutdownBehavior = "terminate"
 	mockClient.On("RunInstances", ctx, mock.MatchedBy(func(input *ec2.RunInstancesInput) bool {
-		return len(input.BlockDeviceMappings) == 1 && *input.BlockDeviceMappings[0].DeviceName == "/dev/abcd"
+		if len(input.TagSpecifications) != 3 {
+			return false
+		}
+		for _, spec := range input.TagSpecifications {
+			found := false
+			for _, tag := range spec.Tags {
+				if *tag.Key == "project" && *tag.Value == "test" {
+					found = true
+				}
+			}
+			if !found {
+				return false
+			}
+		}
+		return input.InstanceInitiatedShutdownBehavior == types.ShutdownBehaviorTerminate && len(input.BlockDeviceMappings) == 1 && *input.BlockDeviceMappings[0].DeviceName == "/dev/abcd"
 	}), mock.Anything).Return(&ec2.RunInstancesOutput{
 		Instances: []types.Instance{
 			{

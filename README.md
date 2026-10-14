@@ -290,3 +290,26 @@ Workers in that pool will be created taking into account the specs you set on th
     **Default**: `gp2`
 
 **Note:** Ensure your instance type supports the IOPS and throughput configurations specified. For instance types built on the Nitro system, higher IOPS and throughput limits are supported. For more details on volume types and their use cases, refer to the [Amazon EBS User Guide](https://docs.aws.amazon.com/ebs/latest/userguide/ebs-volume-types.html).
+
+### Resource tags and shutdown behavior
+
+The provider configuration accepts an optional top-level
+`instance_initiated_shutdown_behavior` (`stop` or `terminate`) and a `[tags]`
+map. Omitting shutdown behavior preserves the EC2 default. For example:
+
+```toml
+region = "eu-central-1"
+subnet_id = "subnet-0123456789abcdef0"
+instance_initiated_shutdown_behavior = "terminate"
+
+[tags]
+project = "ci-runners"
+
+[credentials]
+credential_type = "role"
+```
+
+Tags are applied at launch to instances, EBS volumes, and network interfaces.
+GARM's reserved identity tags cannot be overridden. This supports tag-based
+IAM permissions and resource cleanup without a post-launch tagging race.
+`terminate` lets an in-guest lifetime timer terminate the instance on shutdown.
