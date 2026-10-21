@@ -140,7 +140,7 @@ func (a *AwsCli) FindOneInstance(ctx context.Context, controllerID, instanceName
 	}
 	resp, err := a.FindInstances(ctx, controllerID, instanceName)
 	if err != nil {
-		return types.Instance{}, fmt.Errorf("failed to find instance %s: %w", instanceName, errors.ErrNotFound)
+		return types.Instance{}, fmt.Errorf("failed to find instance %s: %w", instanceName, err)
 	}
 
 	if len(resp) > 1 {
