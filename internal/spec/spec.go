@@ -77,6 +77,7 @@ func newExtraSpecsFromBootstrapData(data params.BootstrapInstance) (*extraSpecs,
 }
 
 type extraSpecs struct {
+	Spot               bool             `json:"spot,omitempty" jsonschema:"description=Launch the instance as a Spot Instance."`
 	SubnetID           *string          `json:"subnet_id,omitempty" jsonschema:"pattern=^subnet-(?:[0-9a-fA-F]{8}|[0-9a-fA-F]{17})$,description=The ID of the subnet formatted as subnet-xxxxxxxxxxxxxxxxx."`
 	SSHKeyName         *string          `json:"ssh_key_name,omitempty" jsonschema:"description=The name of the Key Pair to use for the instance."`
 	IAMInstanceProfile *string          `json:"iam_instance_profile,omitempty" jsonschema:"description=The IAM instance profile to associate with the instance."`
@@ -122,6 +123,7 @@ func GetRunnerSpecFromBootstrapParams(cfg *config.Config, data params.BootstrapI
 
 type RunnerSpec struct {
 	Region             string
+	Spot               bool
 	DisableUpdates     bool
 	ExtraPackages      []string
 	EnableBootDebug    bool
@@ -205,6 +207,8 @@ func (r *RunnerSpec) Validate() error {
 }
 
 func (r *RunnerSpec) MergeExtraSpecs(extraSpecs *extraSpecs) {
+	r.Spot = extraSpecs.Spot
+
 	if extraSpecs.SubnetID != nil && *extraSpecs.SubnetID != "" {
 		r.SubnetID = *extraSpecs.SubnetID
 	}

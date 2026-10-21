@@ -35,6 +35,20 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 		errString      string
 	}{
 		{
+			name: "specs just with spot enabled",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"spot": true}`),
+			},
+			expectedOutput: &extraSpecs{Spot: true},
+		},
+		{
+			name: "specs just with spot disabled",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"spot": false}`),
+			},
+			expectedOutput: &extraSpecs{Spot: false},
+		},
+		{
 			name: "valid bootstrap data",
 			input: params.BootstrapInstance{
 				ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"], "iops": 3000, "throughput": 200, "volume_size": 50, "volume_type": "gp3", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
@@ -208,6 +222,14 @@ func TestExtraSpecsFromBootstrapData(t *testing.T) {
 			errString:      "security_group_ids: Invalid type. Expected: array, given: string",
 		},
 		{
+			name: "invalid type for spot",
+			input: params.BootstrapInstance{
+				ExtraSpecs: json.RawMessage(`{"spot": "true"}`),
+			},
+			expectedOutput: nil,
+			errString:      "spot: Invalid type. Expected: boolean, given: string",
+		},
+		{
 			name: "invalid type for disable_updates",
 			input: params.BootstrapInstance{
 				ExtraSpecs: json.RawMessage(`{"disable_updates": "true"}`),
@@ -300,7 +322,7 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 
 	data := params.BootstrapInstance{
 		Name:       "mock-name",
-		ExtraSpecs: json.RawMessage(`{"subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"], "iops": 3000, "throughput": 200, "volume_size": 50, "volume_type": "gp3", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
+		ExtraSpecs: json.RawMessage(`{"spot": true, "subnet_id": "subnet-0a0a0a0a0a0a0a0a0", "ssh_key_name": "ssh_key_name", "security_group_ids": ["sg-018c35963edfb1cce", "sg-018c35963edfb1cee"], "iops": 3000, "throughput": 200, "volume_size": 50, "volume_type": "gp3", "disable_updates": true, "enable_boot_debug": true, "extra_packages": ["package1", "package2"], "runner_install_template": "IyEvYmluL2Jhc2gKZWNobyBJbnN0YWxsaW5nIHJ1bm5lci4uLg==", "pre_install_scripts": {"setup.sh": "IyEvYmluL2Jhc2gKZWNobyBTZXR1cCBzY3JpcHQuLi4="}, "extra_context": {"key": "value"}}`),
 	}
 
 	config := &config.Config{
@@ -317,6 +339,7 @@ func TestGetRunnerSpecFromBootstrapParams(t *testing.T) {
 	}
 	expectedRunnerSpec := &RunnerSpec{
 		Region:           "region",
+		Spot:             true,
 		DisableUpdates:   true,
 		ExtraPackages:    []string{"package1", "package2"},
 		EnableBootDebug:  true,
