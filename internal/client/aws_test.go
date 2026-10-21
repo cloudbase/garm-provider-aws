@@ -384,9 +384,25 @@ func TestCreateRunningInstance(t *testing.T) {
 				RootDeviceName: aws.String("/dev/abcd"),
 			},
 		},
+	}, nil).Twice()
+	mockClient.On("RunInstances", ctx, mock.MatchedBy(func(input *ec2.RunInstancesInput) bool {
+		return input.InstanceMarketOptions == nil && len(input.BlockDeviceMappings) == 1 && *input.BlockDeviceMappings[0].DeviceName == "/dev/abcd"
+	}), mock.Anything).Return(&ec2.RunInstancesOutput{
+		Instances: []types.Instance{
+			{
+				InstanceId: aws.String(instanceID),
+				KeyName:    aws.String("SSHKeyName"),
+			},
+		},
 	}, nil)
 	mockClient.On("RunInstances", ctx, mock.MatchedBy(func(input *ec2.RunInstancesInput) bool {
-		return len(input.BlockDeviceMappings) == 1 && *input.BlockDeviceMappings[0].DeviceName == "/dev/abcd"
+		return input.InstanceMarketOptions != nil &&
+			input.InstanceMarketOptions.MarketType == types.MarketTypeSpot &&
+			input.InstanceMarketOptions.SpotOptions != nil &&
+			input.InstanceMarketOptions.SpotOptions.InstanceInterruptionBehavior == types.InstanceInterruptionBehaviorTerminate &&
+			input.InstanceMarketOptions.SpotOptions.SpotInstanceType == types.SpotInstanceTypeOneTime &&
+			input.InstanceMarketOptions.SpotOptions.MaxPrice == nil &&
+			len(input.BlockDeviceMappings) == 1 && *input.BlockDeviceMappings[0].DeviceName == "/dev/abcd"
 	}), mock.Anything).Return(&ec2.RunInstancesOutput{
 		Instances: []types.Instance{
 			{
@@ -397,6 +413,11 @@ func TestCreateRunningInstance(t *testing.T) {
 	}, nil)
 
 	instance, err := awsCli.CreateRunningInstance(ctx, spec)
+	require.NoError(t, err)
+	require.Equal(t, instanceID, instance)
+
+	spec.Spot = true
+	instance, err = awsCli.CreateRunningInstance(ctx, spec)
 	require.NoError(t, err)
 	require.Equal(t, instanceID, instance)
 }

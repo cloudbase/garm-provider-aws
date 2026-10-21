@@ -262,17 +262,28 @@ func (a *AwsCli) CreateRunningInstance(ctx context.Context, spec *spec.RunnerSpe
 		return "", fmt.Errorf("failed to query AMI root volume: root device is nil")
 	}
 	root_volume := *images.Images[0].RootDeviceName
+	var instanceMarketOptions *types.InstanceMarketOptionsRequest
+	if spec.Spot {
+		instanceMarketOptions = &types.InstanceMarketOptionsRequest{
+			MarketType: types.MarketTypeSpot,
+			SpotOptions: &types.SpotMarketOptions{
+				InstanceInterruptionBehavior: types.InstanceInterruptionBehaviorTerminate,
+				SpotInstanceType:             types.SpotInstanceTypeOneTime,
+			},
+		}
+	}
 
 	resp, err := a.client.RunInstances(ctx, &ec2.RunInstancesInput{
-		ImageId:            aws.String(spec.BootstrapParams.Image),
-		InstanceType:       types.InstanceType(spec.BootstrapParams.Flavor),
-		MaxCount:           aws.Int32(1),
-		MinCount:           aws.Int32(1),
-		SubnetId:           aws.String(spec.SubnetID),
-		SecurityGroupIds:   spec.SecurityGroupIds,
-		UserData:           aws.String(udata),
-		KeyName:            spec.SSHKeyName,
-		IamInstanceProfile: spec.IAMInstanceProfile,
+		ImageId:               aws.String(spec.BootstrapParams.Image),
+		InstanceType:          types.InstanceType(spec.BootstrapParams.Flavor),
+		MaxCount:              aws.Int32(1),
+		MinCount:              aws.Int32(1),
+		SubnetId:              aws.String(spec.SubnetID),
+		SecurityGroupIds:      spec.SecurityGroupIds,
+		UserData:              aws.String(udata),
+		KeyName:               spec.SSHKeyName,
+		IamInstanceProfile:    spec.IAMInstanceProfile,
+		InstanceMarketOptions: instanceMarketOptions,
 		BlockDeviceMappings: []types.BlockDeviceMapping{
 			{
 				DeviceName: aws.String(root_volume),
