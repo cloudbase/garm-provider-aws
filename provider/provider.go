@@ -84,7 +84,7 @@ func (a *AwsProvider) DeleteInstance(ctx context.Context, instance string) error
 	if strings.HasPrefix(instance, "i-") {
 		inst = instance
 	} else {
-		tmp, err := a.awsCli.FindOneInstance(ctx, "", instance)
+		tmp, err := a.awsCli.FindOneInstance(ctx, a.controllerID, instance)
 		if err != nil {
 			if errors.Is(err, garmErrors.ErrNotFound) {
 				return nil
@@ -110,7 +110,7 @@ func (a *AwsProvider) DeleteInstance(ctx context.Context, instance string) error
 }
 
 func (a *AwsProvider) GetInstance(ctx context.Context, instance string) (params.ProviderInstance, error) {
-	awsInstance, err := a.awsCli.FindOneInstance(ctx, "", instance)
+	awsInstance, err := a.awsCli.FindOneInstance(ctx, a.controllerID, instance)
 	if err != nil {
 		return params.ProviderInstance{}, fmt.Errorf("failed to get VM details: %w", err)
 	}
@@ -152,14 +152,18 @@ func (a *AwsProvider) Stop(ctx context.Context, instance string, force bool) err
 }
 
 func (a *AwsProvider) Start(ctx context.Context, instance string) error {
-	awsInstance, err := a.awsCli.FindOneInstance(ctx, "", instance)
+	awsInstance, err := a.awsCli.FindOneInstance(ctx, a.controllerID, instance)
 	if err != nil {
 		return fmt.Errorf("failed to determine instance: %w", err)
 	}
 	if awsInstance.State.Name == types.InstanceStateNameStopping {
 		return fmt.Errorf("instance %s cannot be started in %s state", instance, awsInstance.State.Name)
 	}
-	return a.awsCli.StartInstance(ctx, instance)
+
+	if awsInstance.InstanceId == nil {
+		return fmt.Errorf("failed to determine instance ID for %s", instance)
+	}
+	return a.awsCli.StartInstance(ctx, *awsInstance.InstanceId)
 }
 
 func (a *AwsProvider) GetVersion(ctx context.Context) string {
