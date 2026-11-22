@@ -46,12 +46,23 @@ func NewConfig(cfgFile string) (*Config, error) {
 }
 
 type Config struct {
-	Credentials Credentials `toml:"credentials"`
-	SubnetID    string      `toml:"subnet_id"`
-	Region      string      `toml:"region"`
+	Tags                              map[string]string `toml:"tags"`
+	InstanceInitiatedShutdownBehavior string            `toml:"instance_initiated_shutdown_behavior"`
+	Credentials                       Credentials       `toml:"credentials"`
+	SubnetID                          string            `toml:"subnet_id"`
+	Region                            string            `toml:"region"`
 }
 
 func (c *Config) Validate() error {
+	if c.InstanceInitiatedShutdownBehavior != "" && c.InstanceInitiatedShutdownBehavior != "stop" && c.InstanceInitiatedShutdownBehavior != "terminate" {
+		return fmt.Errorf("instance_initiated_shutdown_behavior must be stop or terminate")
+	}
+	for key := range c.Tags {
+		if key == "Name" || key == "GARM_POOL_ID" || key == "GARM_CONTROLLER_ID" || key == "OSType" || key == "OSArch" {
+			return fmt.Errorf("reserved instance tag: %s", key)
+		}
+	}
+
 	if err := c.Credentials.Validate(); err != nil {
 		return fmt.Errorf("failed to validate credentials: %w", err)
 	}
