@@ -18,6 +18,7 @@ package provider
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -238,7 +239,7 @@ func TestDeleteInstanceWithName(t *testing.T) {
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("tag:GARM_CONTROLLER_ID"),
-				Values: []string{""},
+				Values: []string{"controllerID"},
 			},
 			{
 				Name:   aws.String("tag:Name"),
@@ -265,6 +266,40 @@ func TestDeleteInstanceWithName(t *testing.T) {
 	}, mock.Anything).Return(&ec2.TerminateInstancesOutput{}, nil)
 	err := provider.DeleteInstance(ctx, instanceName)
 	assert.NoError(t, err)
+}
+
+func TestNameLookupDescribeErrorIsPropagated(t *testing.T) {
+	ctx := context.Background()
+	describeErr := errors.New("access denied")
+	provider := &AwsProvider{
+		controllerID: "controllerID",
+		awsCli:       &client.AwsCli{},
+	}
+	config := &config.Config{
+		Region: "us-east-1",
+		Credentials: config.Credentials{
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
+		},
+	}
+
+	deleteClient := new(client.MockComputeClient)
+	provider.awsCli.SetConfig(config)
+	provider.awsCli.SetClient(deleteClient)
+	deleteClient.On("DescribeInstances", ctx, mock.Anything, mock.Anything).Return((*ec2.DescribeInstancesOutput)(nil), describeErr)
+	assert.ErrorIs(t, provider.DeleteInstance(ctx, "garm-instance"), describeErr)
+	deleteClient.AssertExpectations(t)
+
+	getClient := new(client.MockComputeClient)
+	provider.awsCli.SetClient(getClient)
+	getClient.On("DescribeInstances", ctx, mock.Anything, mock.Anything).Return((*ec2.DescribeInstancesOutput)(nil), describeErr)
+	_, err := provider.GetInstance(ctx, "garm-instance")
+	assert.ErrorIs(t, err, describeErr)
+	getClient.AssertExpectations(t)
 }
 
 func TestGetInstanceWithID(t *testing.T) {
@@ -374,7 +409,7 @@ func TestGetInstanceWithName(t *testing.T) {
 		Filters: []types.Filter{
 			{
 				Name:   aws.String("tag:GARM_CONTROLLER_ID"),
-				Values: []string{""},
+				Values: []string{"controllerID"},
 			},
 			{
 				Name:   aws.String("tag:Name"),
@@ -603,6 +638,51 @@ func TestStartStoppedInstance(t *testing.T) {
 	}, mock.Anything).Return(&ec2.StartInstancesOutput{}, nil)
 	err := provider.Start(ctx, instanceID)
 	assert.NoError(t, err)
+}
+
+func TestStartStoppedInstanceWithName(t *testing.T) {
+	ctx := context.Background()
+	instanceID := "i-1234567890abcdef0"
+	instanceName := "garm-instance"
+	provider := &AwsProvider{
+		controllerID: "controllerID",
+		awsCli:       &client.AwsCli{},
+	}
+	config := &config.Config{
+		Region:   "us-east-1",
+		SubnetID: "subnet-123456",
+		Credentials: config.Credentials{
+			CredentialType: config.AWSCredentialTypeStatic,
+			StaticCredentials: config.StaticCredentials{
+				AccessKeyID:     "AccessKeyID",
+				SecretAccessKey: "SecretAccessKey",
+				SessionToken:    "SessionToken",
+			},
+		},
+	}
+	mockComputeClient := new(client.MockComputeClient)
+	provider.awsCli.SetConfig(config)
+	provider.awsCli.SetClient(mockComputeClient)
+
+	mockComputeClient.On("DescribeInstances", ctx, &ec2.DescribeInstancesInput{
+		Filters: []types.Filter{
+			{Name: aws.String("tag:GARM_CONTROLLER_ID"), Values: []string{"controllerID"}},
+			{Name: aws.String("tag:Name"), Values: []string{instanceName}},
+			{Name: aws.String("instance-state-name"), Values: []string{"pending", "running", "stopping", "stopped"}},
+		},
+	}, mock.Anything).Return(&ec2.DescribeInstancesOutput{
+		Reservations: []types.Reservation{{Instances: []types.Instance{{
+			InstanceId: aws.String(instanceID),
+			State:      &types.InstanceState{Name: types.InstanceStateNameStopped},
+		}}}},
+	}, nil)
+	mockComputeClient.On("StartInstances", ctx, &ec2.StartInstancesInput{
+		InstanceIds: []string{instanceID},
+	}, mock.Anything).Return(&ec2.StartInstancesOutput{}, nil)
+
+	err := provider.Start(ctx, instanceName)
+	assert.NoError(t, err)
+	mockComputeClient.AssertExpectations(t)
 }
 
 func TestStartStoppingInstance(t *testing.T) {
